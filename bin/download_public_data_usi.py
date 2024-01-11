@@ -43,6 +43,7 @@ def main():
     parser.add_argument('output_folder', help='output_folder')
     parser.add_argument('output_summary', help='output_summary')
     parser.add_argument('--cache_directory', default=None, help='folder of existing data')
+    parser.add_argument('--nestfiles', help='Nest mass spec files in a hashed folder so its not all in the same directory', action='store_true', default=False)
     args = parser.parse_args()
 
     # checking the input file exists
@@ -82,11 +83,19 @@ def main():
             output_result_dict["download_url"] = download_url
 
             target_filename = _determine_ms_filename(download_url)
-            target_path = os.path.join(args.output_folder, target_filename)
 
-            # TODO: we should make an option to nest these to get around the file size limit
+            if args.nestfiles is False:
+                target_path = os.path.join(args.output_folder, target_filename)
+            else:
+                usi_hash = uuid.uuid3(uuid.NAMESPACE_DNS, usi)
+                folder_hash = str(usi_hash)[:2]
 
-            # TODO: make sure that if a filename is repeated, we drop one of them because some software does not like it
+                target_dir = os.path.join(args.output_folder, folder_hash)
+
+                if not os.path.exists(target_dir):
+                    os.makedirs(target_dir)
+
+                target_path = os.path.join(target_dir, target_filename)
 
             # Checking the cache
             if args.cache_directory is not None and os.path.exists(args.cache_directory):
