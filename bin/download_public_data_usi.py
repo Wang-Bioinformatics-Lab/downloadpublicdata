@@ -75,8 +75,6 @@ def main():
         output_result_dict = {}
         output_result_dict["usi"] = usi
 
-        output_result_list.append(output_result_dict)
-
         if r.status_code == 200:
             download_url = r.text
 
@@ -119,8 +117,6 @@ def main():
                         output_result_dict["status"] = "EXISTS_IN_CACHE"
                     else:
                         output_result_dict["status"] = "DUPLICATE_FILENAME"
-
-                    continue
                 else:
                     # Saving file to cache if we don't
                     r = requests.get(download_url, stream=True)
@@ -155,9 +151,11 @@ def main():
                         fd.write(chunk)
 
                 output_result_dict["status"] = "DOWNLOADED_INTO_OUTPUT_WITHOUT_CACHE"
-            
+
         else:
             output_result_dict["status"] = "ERROR"
+
+        output_result_list.append(output_result_dict)
 
     if len(output_result_list) > 0:
         df = pd.DataFrame(output_result_list)
