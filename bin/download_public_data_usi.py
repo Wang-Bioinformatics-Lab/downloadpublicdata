@@ -95,6 +95,8 @@ def main():
 
                 target_path = os.path.join(target_dir, target_filename)
 
+            output_result_dict["target_path"] = target_path
+
             # Checking the cache
             if args.cache_directory is not None and os.path.exists(args.cache_directory):
                 
