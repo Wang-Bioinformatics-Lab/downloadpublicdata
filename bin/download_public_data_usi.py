@@ -99,12 +99,17 @@ def main():
 
     # Lets download these files
     for usi in usi_list:
-    
+        if len(usi) < 5:
+            continue
+
         output_result_dict = {}
         output_result_dict["usi"] = usi
 
         # USI Filename
-        target_filename = _determine_ms_filename(usi)
+        try:
+            target_filename = _determine_ms_filename(usi)
+        except:
+            continue
 
         if target_filename is not None:
 
