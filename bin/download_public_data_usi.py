@@ -11,6 +11,8 @@ import shutil
 import requests
 import yaml
 import uuid
+from tqdm import tqdm
+from joblib import Parallel, delayed
 
 
 def _determine_download_url(usi):
@@ -67,7 +69,108 @@ def _determine_ms_filename(usi):
 
     return os.path.basename(download_url)
 
+def download_helper(usi, args):
+    if len(usi) < 5:
+       return None
+  
+    output_result_dict = {}
+    output_result_dict["usi"] = usi
+
+    # USI Filename
+    try:
+        target_filename = _determine_ms_filename(usi)
+    except:
+        continue
+
+    if target_filename is not None:
+
+        if args.nestfiles is False:
+            target_path = os.path.join(args.output_folder, target_filename)
+        else:
+            usi_hash = uuid.uuid3(uuid.NAMESPACE_DNS, usi)
+            folder_hash = str(usi_hash)[:2]
+
+            target_dir = os.path.join(args.output_folder, folder_hash)
+
+            if not os.path.exists(target_dir):
+                os.makedirs(target_dir)
+
+            target_path = os.path.join(target_dir, target_filename)
+
+        output_result_dict["target_path"] = target_path
+
+        # Checking the cache
+        if args.cache_directory is not None and os.path.exists(args.cache_directory):
+
+            namespace = uuid.UUID('6ba7b810-9dad-11d1-80b4-00c04fd430c8')
+            hashed_id = str(uuid.uuid3(namespace, usi)).replace("-", "")
+
+            cache_path = os.path.join(args.cache_directory, hashed_id)
+            cache_path = os.path.realpath(cache_path)
+
+            cache_filename = cache_path + "-" + target_filename[-50:].rstrip()
+
+            output_result_dict["cache_filename"] = os.path.basename(cache_filename)
+
+            # If we find it, we can create a link to it
+            if os.path.exists(cache_filename):
+                print("Found in cache", cache_path)
+
+                if not os.path.exists(target_path):
+                    os.symlink(cache_filename, target_path)
+                    output_result_dict["status"] = "EXISTS_IN_CACHE"
+                else:
+                    output_result_dict["status"] = "DUPLICATE_FILENAME"
+            else:
+                download_url = _determine_download_url(usi)
+
+                if download_url is None:
+                    output_result_dict["status"] = "ERROR"
+                else:
+                    # Saving file to cache if we don't
+                    r = requests.get(download_url, stream=True)
+                    try:
+                        with open(os.path.join(args.output_folder, cache_filename), 'wb') as fd:
+                            for chunk in r.iter_content(chunk_size=128):
+                                fd.write(chunk)
+
+                        # Creating symlink
+                        if not os.path.exists(target_path):
+                            os.symlink(cache_filename, target_path)
+                            output_result_dict["status"] = "EXISTS_IN_CACHE"
+                        else:
+                            output_result_dict["status"] = "DUPLICATE_FILENAME"
+                    except:
+                        # We are likely writing to read only file system for the cache
+                        with open(target_path, 'wb') as fd:
+                            for chunk in r.iter_content(chunk_size=128):
+                                fd.write(chunk)
+
+                    # Checking the status code
+                    if r.status_code == 200:
+                        output_result_dict["status"] = "DOWNLOADED_INTO_CACHE"
+                    else:
+                        # TODO: we should remove the file
+                        output_result_dict["status"] = "DOWNLOAD_ERROR"
+        else:
+            download_url = _determine_download_url(usi)
+
+            if download_url is None:
+                output_result_dict["status"] = "ERROR"
+
+            else:
+                # download in chunks using requests
+                r = requests.get(download_url, stream=True)
+                with open(target_path, 'wb') as fd:
+                    for chunk in r.iter_content(chunk_size=128):
+                        fd.write(chunk)
+
+                output_result_dict["status"] = "DOWNLOADED_INTO_OUTPUT_WITHOUT_CACHE"
+
+    else:
+        output_result_dict["status"] = "ERROR"
         
+    return output_result_dict
 
 def main():
     parser = argparse.ArgumentParser(description='Running library search parallel')
@@ -76,12 +179,18 @@ def main():
     parser.add_argument('output_summary', help='output_summary')
     parser.add_argument('--cache_directory', default=None, help='folder of existing data')
     parser.add_argument('--nestfiles', help='Nest mass spec files in a hashed folder so its not all in the same directory', action='store_true', default=False)
+    parser.add_argument('--threads', default=1, type=int, help="Number of threads")
+    parser.add_argument('--progress', help='Show progress bar', action='store_true', default=False)
+    parser.add_argument('--extension_filter', default=None, help="Filter to only download certain extensions. Should be formatted as a semicolon separated list")
     args = parser.parse_args()
 
     # checking the input file exists
     if not os.path.isfile(args.input_download_file):
         print("Input file does not exist")
         exit(0)
+
+    if not os.path.isdir(args.output_folder):
+        os.makedirs(args.output_folder, exist_ok=True)
 
     # Checking the file extension
     if args.input_download_file.endswith(".yaml"):
@@ -94,110 +203,17 @@ def main():
 
     # Cleaning USI list
     usi_list = [usi.lstrip().rstrip() for usi in usi_list]
+    
+    # Filtering extensions
+    extension_filter = tuple([x.lower() for x in args.extension_filter.split(";")])
+    if args.extension_filter is not None:
+        usi_list = [usi for usi in usi_list if usi.lower().endswith(extension_filter)]
+        
+    # Let's download these files
+    if args.progress:
+        usi_list = tqdm(usi_list)
 
-    output_result_list = []
-
-    # Lets download these files
-    for usi in usi_list:
-        if len(usi) < 5:
-            continue
-
-        output_result_dict = {}
-        output_result_dict["usi"] = usi
-
-        # USI Filename
-        try:
-            target_filename = _determine_ms_filename(usi)
-        except:
-            continue
-
-        if target_filename is not None:
-
-            if args.nestfiles is False:
-                target_path = os.path.join(args.output_folder, target_filename)
-            else:
-                usi_hash = uuid.uuid3(uuid.NAMESPACE_DNS, usi)
-                folder_hash = str(usi_hash)[:2]
-
-                target_dir = os.path.join(args.output_folder, folder_hash)
-
-                if not os.path.exists(target_dir):
-                    os.makedirs(target_dir)
-
-                target_path = os.path.join(target_dir, target_filename)
-
-            output_result_dict["target_path"] = target_path
-
-            # Checking the cache
-            if args.cache_directory is not None and os.path.exists(args.cache_directory):
-                
-                namespace = uuid.UUID('6ba7b810-9dad-11d1-80b4-00c04fd430c8')
-                hashed_id = str(uuid.uuid3(namespace, usi)).replace("-", "")
-
-                cache_path = os.path.join(args.cache_directory, hashed_id)
-                cache_path = os.path.realpath(cache_path)
-                
-                cache_filename = cache_path + "-" + target_filename[-50:].rstrip()
-
-                output_result_dict["cache_filename"] = os.path.basename(cache_filename)
-
-                # If we find it, we can create a link to it
-                if os.path.exists(cache_filename):
-                    print("Found in cache", cache_path)
-                    
-                    if not os.path.exists(target_path):
-                        os.symlink(cache_filename, target_path)
-                        output_result_dict["status"] = "EXISTS_IN_CACHE"
-                    else:
-                        output_result_dict["status"] = "DUPLICATE_FILENAME"
-                else:
-                    download_url = _determine_download_url(usi)
-
-                    if download_url is None:
-                        output_result_dict["status"] = "ERROR"
-                    else:
-                        # Saving file to cache if we don't
-                        r = requests.get(download_url, stream=True)
-                        try:
-                            with open(os.path.join(args.output_folder, cache_filename), 'wb') as fd:
-                                for chunk in r.iter_content(chunk_size=128):
-                                    fd.write(chunk)
-                                
-                            # Creating symlink
-                            if not os.path.exists(target_path):
-                                os.symlink(cache_filename, target_path)
-                                output_result_dict["status"] = "EXISTS_IN_CACHE"
-                            else:
-                                output_result_dict["status"] = "DUPLICATE_FILENAME"
-                        except:
-                            # We are likely writing to read only file system for the cache
-                            with open(target_path, 'wb') as fd:
-                                for chunk in r.iter_content(chunk_size=128):
-                                    fd.write(chunk)
-
-                        # Checking the status code
-                        if r.status_code == 200:
-                            output_result_dict["status"] = "DOWNLOADED_INTO_CACHE"
-                        else:
-                            # TODO: we should remove the file
-                            output_result_dict["status"] = "DOWNLOAD_ERROR"
-            else:
-                download_url = _determine_download_url(usi)
-
-                if download_url is None:
-                    output_result_dict["status"] = "ERROR"
-                    
-                else:
-                    # download in chunks using requests
-                    r = requests.get(download_url, stream=True)
-                    with open(target_path, 'wb') as fd:
-                        for chunk in r.iter_content(chunk_size=128):
-                            fd.write(chunk)
-
-                    output_result_dict["status"] = "DOWNLOADED_INTO_OUTPUT_WITHOUT_CACHE"
-
-        else:
-            output_result_dict["status"] = "ERROR"
+    output_result_list = Parallel(n_jobs=args.threads)(delayed(download_helper)(usi, args) for usi in usi_list)  
 
         output_result_list.append(output_result_dict)
 
