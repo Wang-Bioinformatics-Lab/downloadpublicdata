@@ -37,11 +37,15 @@ def _determine_ms_filename(download_url):
 
     return os.path.basename(download_url)
 
-def download_helper(usi):
+def download_helper(usi, args):
     # Getting the path to the original file
     url = "https://dashboard.gnps2.org/downloadlink"
     params = {"usi": usi}
-    r = requests.get(url, params=params)
+    try:
+        r = requests.get(url, params=params, timeout=120)
+    except:
+        print("Error with USI", usi)
+        return {"usi": usi, "status": "ERROR"}
     print(r.url)
     output_result_dict = {}
     output_result_dict["usi"] = usi
@@ -92,7 +96,11 @@ def download_helper(usi):
                 return output_result_dict
             else:
                 # Saving file to cache if we don't
-                r = requests.get(download_url, stream=True)
+                try:
+                    r = requests.get(download_url, stream=True, timeout=120)
+                except:
+                    print("Error with USI", usi)
+                    return {"usi": usi, "status": "ERROR"}
                 try:
                     with open(os.path.join(args.output_folder, cache_filename), 'wb') as fd:
                         for chunk in r.iter_content(chunk_size=128):
@@ -118,7 +126,11 @@ def download_helper(usi):
                     output_result_dict["status"] = "DOWNLOAD_ERROR"
         else:
             # download in chunks using requests
-            r = requests.get(download_url, stream=True)
+            try:
+                r = requests.get(download_url, stream=True, timeout=120)
+            except:
+                print("Error with USI", usi)
+                return {"usi": usi, "status": "ERROR"}
             with open(target_path, 'wb') as fd:
                 for chunk in r.iter_content(chunk_size=128):
                     fd.write(chunk)
@@ -147,6 +159,9 @@ def main():
         print("Input file does not exist")
         exit(0)
 
+    if not os.path.isdir(args.output_folder):
+        os.makedirs(args.output_folder, exist_ok=True)
+
     # Checking the file extension
     if args.input_download_file.endswith(".yaml"):
         # Loading yaml file
@@ -160,15 +175,15 @@ def main():
     usi_list = [usi.lstrip().rstrip() for usi in usi_list]
     
     # Filtering extensions
+    extension_filter = tuple([x.lower() for x in args.extension_filter.split(";")])
     if args.extension_filter is not None:
-        extension_filter = tuple([x.lower() for x in args.extension_filter.split(";")])
         usi_list = [usi for usi in usi_list if usi.lower().endswith(extension_filter)]
         
     # Let's download these files
     if args.progress:
         usi_list = tqdm(usi_list)
 
-    output_result_list = Parallel(n_jobs=args.threads)(delayed(download_helper)(usi) for usi in usi_list)  
+    output_result_list = Parallel(n_jobs=args.threads)(delayed(download_helper)(usi, args) for usi in usi_list)  
 
     if len(output_result_list) > 0:
         df = pd.DataFrame(output_result_list)
