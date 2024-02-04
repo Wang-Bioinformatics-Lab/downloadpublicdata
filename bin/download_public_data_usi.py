@@ -81,8 +81,8 @@ def download_helper(usi, args, extension_filter=None):
         try:
             target_filename = _determine_ms_filename(usi)
             # Filtering extensions
-            if args.extension_filter is not None:
-                if not usi.lower().endswith(extension_filter):
+            if extension_filter is not None:
+                if not target_filename.lower().endswith(extension_filter):
                     return None
         except:
             return None
