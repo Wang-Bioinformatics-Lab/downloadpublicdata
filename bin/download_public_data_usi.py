@@ -12,7 +12,7 @@ import requests
 import yaml
 import uuid
 from tqdm import tqdm
-from joblib import Parallel, delayed
+import warnings
 
 
 def _determine_download_url(usi):
@@ -81,8 +81,8 @@ def download_helper(usi, args, extension_filter=None):
         try:
             target_filename = _determine_ms_filename(usi)
             # Filtering extensions
-            if args.extension_filter is not None:
-                if not usi.lower().endswith(extension_filter):
+            if extension_filter is not None:
+                if not target_filename.lower().endswith(extension_filter):
                     return None
         except:
             return None
@@ -195,6 +195,9 @@ def main():
     parser.add_argument('--raw_usi_input', action='store_true', default=False, help="Specify if input_download_file is a raw USI file")
     args = parser.parse_args()
 
+    if args.threads != 1:
+        warnings.warn("The 'threads' argument is deprecated and will be removed in a future version. Only single-threading is supported.", DeprecationWarning)
+
     # checking the input file exists
     if not os.path.isfile(args.input_download_file):
         print("Input file does not exist")
@@ -224,8 +227,12 @@ def main():
         
     extension_filter = tuple([x.lower() for x in args.extension_filter.split(";")])
 
-    output_result_list = Parallel(n_jobs=args.threads)(delayed(download_helper)(usi, args, extension_filter) for usi in usi_list)  
-
+    output_result_list = []
+    for usi in usi_list:
+        result = download_helper(usi, args, extension_filter)
+        if result is not None:
+            output_result_list.append(result)
+    
     if len(output_result_list) > 0:
         df = pd.DataFrame(output_result_list)
         df.to_csv(args.output_summary, sep="\t", index=False)
