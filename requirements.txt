@@ -2,4 +2,3 @@ pandas
 pyyaml
 requests
 tqdm
-joblib
