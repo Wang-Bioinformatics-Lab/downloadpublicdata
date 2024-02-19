@@ -1,3 +1,5 @@
+This tool is meant to make it easy to download mass spectrometry files from public and private repositories using the universal spectrum identifiers. Currently it supports GNPS/MassIVE, GNPS2, Metabolights, Metabolomics Workbench, and PRIDE. 
+
 ## Setup
 
 ```
