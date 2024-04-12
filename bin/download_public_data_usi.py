@@ -224,8 +224,11 @@ def main():
     # Let's download these files
     if args.progress:
         usi_list = tqdm(usi_list)
-        
-    extension_filter = tuple([x.lower() for x in args.extension_filter.split(";")])
+    
+    if args.extension_filter:
+        extension_filter = tuple([x.lower() for x in args.extension_filter.split(";")])
+    else:
+        extension_filter = None
 
     output_result_list = []
     for usi in usi_list:
