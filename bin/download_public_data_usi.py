@@ -127,30 +127,23 @@ def _download_vendor(mri, target_filename):
     params = {}
     params["mri"] = mri
 
-    print("REQUEST CONVERSION")
-
     r = requests.get(convert_request_url, params=params)
 
     # waiting for the status
     convert_status_url = "{}/convert/status".format(DATASET_CACHE_URL_BASE)
 
     # lets try waiting 5 min
-    for i in range(5):
+    for i in range(10):
         r = requests.get(convert_status_url, params=params)
         if r.status_code == 200:
-            print(r.json())
             if r.json()["status"] == True:
                 break
             else:
-                print("WAITING", r.status_code)
-                time.sleep(60)
+                time.sleep(30)
         else:
-            print("WAITING", r.status_code)
-            time.sleep(60)
+            time.sleep(30)
 
     # Lets download
-    print("DOWNLOAD CONVERSION")
-
     download_url = "{}/convert/download".format(DATASET_CACHE_URL_BASE)
 
     r = requests.get(download_url, params=params, stream=True)
@@ -159,16 +152,15 @@ def _download_vendor(mri, target_filename):
             for chunk in r.iter_content(chunk_size=128):
                 fd.write(chunk)
     else:
-        print("DOWNLOAD not ready")
+        print("CONVERSION not ready")
+        return "CONVERSION NOT READY"
 
-    return 0
+    return "CONVERTED"
 
 def download_helper(usi, args, extension_filter=None):
     try:
         if len(usi) < 5:
             return None
-        
-        print(usi)
     
         output_result_dict = {}
         output_result_dict["usi"] = usi
@@ -229,7 +221,7 @@ def download_helper(usi, args, extension_filter=None):
                         os.symlink(cache_filename, target_path)
                         output_result_dict["status"] = "EXISTS_IN_CACHE"
                     else:
-                        output_result_dict["status"] = "DUPLICATE_FILENAME"
+                        output_result_dict["status"] = "EXISTS_IN_OUTPUT"
                 else:
                     download_url = _determine_download_url(usi)
 
@@ -249,12 +241,18 @@ def download_helper(usi, args, extension_filter=None):
                                 output_result_dict["status"] = "EXISTS_IN_CACHE"
                             else:
                                 output_result_dict["status"] = "EXISTS_IN_OUTPUT"
+                        except KeyboardInterrupt:
+                            raise
+
                         except:
                             # We are likely writing to read only file system for the cache
                             try:
                                 _download(usi, target_path, mri_original_extension)
+                            except KeyboardInterrupt:
+                                raise
                             except:
                                 output_result_dict["status"] = "DOWNLOAD_ERROR"
+                            
             else:
                 # if the target path file is already there, then we don't need to do anything
                 if os.path.exists(target_path):
@@ -273,6 +271,8 @@ def download_helper(usi, args, extension_filter=None):
 
         else:
             output_result_dict["status"] = "ERROR"
+    except KeyboardInterrupt:
+        raise
     except Exception as e:
         print("Error", e)
         print("Error", e, file=sys.stderr)
@@ -331,6 +331,7 @@ def main():
 
     output_result_list = []
     for usi in usi_list:
+        print("Downloading", usi)
         result = download_helper(usi, args, extension_filter)
         if result is not None:
             output_result_list.append(result)
