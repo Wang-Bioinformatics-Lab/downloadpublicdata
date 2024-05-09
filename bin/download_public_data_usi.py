@@ -136,16 +136,21 @@ def _download_vendor(mri, target_filename):
 
     # lets try waiting 5 min
     for i in range(5):
-
         r = requests.get(convert_status_url, params=params)
         if r.status_code == 200:
+            print(r.json())
             if r.json()["status"] == True:
                 break
+            else:
+                print("WAITING", r.status_code)
+                time.sleep(60)
         else:
             print("WAITING", r.status_code)
             time.sleep(60)
 
     # Lets download
+    print("DOWNLOAD CONVERSION")
+
     download_url = "{}/convert/download".format(DATASET_CACHE_URL_BASE)
 
     r = requests.get(download_url, params=params, stream=True)
@@ -153,6 +158,8 @@ def _download_vendor(mri, target_filename):
         with open(target_filename, 'wb') as fd:
             for chunk in r.iter_content(chunk_size=128):
                 fd.write(chunk)
+    else:
+        print("DOWNLOAD not ready")
 
     return 0
 
