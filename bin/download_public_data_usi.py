@@ -14,6 +14,7 @@ import uuid
 from tqdm import tqdm
 import warnings
 import time
+from sanitize_filename import sanitize
 
 def _determine_download_url(usi):
     # Getting the path to the original file
@@ -41,7 +42,12 @@ def _determine_ms_filename(usi):
     # Checking if filename is valid extension that we could infer the filename
     lower_fileportion = fileportion.lower()
     if lower_fileportion.endswith(".mzml") or lower_fileportion.endswith(".mzxml") or lower_fileportion.endswith(".mgf"):
-        return os.path.basename(fileportion)
+        fileportion = os.path.basename(fileportion)
+
+        # make this safe on disk
+        fileportion = sanitize(fileportion)
+
+        return fileportion
 
     # Checking if we can get the filename from the API
     download_url = _determine_download_url(usi)
@@ -57,7 +63,12 @@ def _determine_ms_filename(usi):
         parsed_params = urlparse(download_url)
         filename = parse_qs(parsed_params.query)['F'][0]
 
-        return os.path.basename(filename)
+        filename = os.path.basename(filename)
+
+        # make this safe on disk
+        filename = sanitize(filename)
+
+        return filename
 
     # MassIVE and GNPS
     if "massive.ucsd.edu" in download_url:
@@ -66,7 +77,12 @@ def _determine_ms_filename(usi):
         parsed_params = urlparse(download_url)
         filename = parse_qs(parsed_params.query)['file'][0]
 
-        return os.path.basename(filename)
+        filename = os.path.basename(filename)
+
+        # make this safe on disk
+        filename = sanitize(filename)
+
+        return filename
 
     # TODO: Work for PRIDE
     # TODO: Work for Metabolights
