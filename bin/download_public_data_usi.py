@@ -332,6 +332,10 @@ def main():
     output_result_list = []
     for usi in usi_list:
         print("Downloading", usi)
+
+        if len(usi) < 5:
+            continue
+
         result = download_helper(usi, args, extension_filter)
         if result is not None:
             output_result_list.append(result)
