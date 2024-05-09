@@ -17,6 +17,8 @@ import warnings
 
 def _determine_download_url(usi):
     # Getting the path to the original file
+    
+    # TODO: this likely shoudl be in the datasetcache as well as the dashboard so there is redundancy
     url = "https://dashboard.gnps2.org/downloadlink"
     params = {"usi": usi}
     r = requests.get(url, params=params)
@@ -44,6 +46,8 @@ def _determine_ms_filename(usi):
     # Checking if we can get the filename from the API
     download_url = _determine_download_url(usi)
 
+    print(download_url)
+
     if download_url is None:
         return None
 
@@ -69,10 +73,23 @@ def _determine_ms_filename(usi):
 
     return os.path.basename(download_url)
 
+def _download_mzml(usi, target_filename):
+    # here we don't need to do any conversion and can get directly from the source
+    download_url = _determine_download_url(usi)
+
+    r = requests.get(download_url, stream=True)
+    with open(target_filename, 'wb') as fd:
+        for chunk in r.iter_content(chunk_size=128):
+            fd.write(chunk)
+
+    return 0
+
 def download_helper(usi, args, extension_filter=None):
     try:
         if len(usi) < 5:
             return None
+        
+        print(usi)
     
         output_result_dict = {}
         output_result_dict["usi"] = usi
@@ -80,6 +97,7 @@ def download_helper(usi, args, extension_filter=None):
         # USI Filename
         try:
             target_filename = _determine_ms_filename(usi)
+
             # Filtering extensions
             if extension_filter is not None:
                 if not target_filename.lower().endswith(extension_filter):
@@ -88,6 +106,8 @@ def download_helper(usi, args, extension_filter=None):
             return None
 
         if target_filename is not None:
+            # getting filename for target_filename
+            filename_without_extension, file_extension = os.path.splitext(target_filename)
 
             if args.nestfiles is False:
                 target_path = os.path.join(args.output_folder, target_filename)
@@ -117,7 +137,7 @@ def download_helper(usi, args, extension_filter=None):
 
                 output_result_dict["cache_filename"] = os.path.basename(cache_filename)
 
-                # If we find it, we can create a link to it
+                # If we find it in the cache, we can create a link to it
                 if os.path.exists(cache_filename):
                     print("Found in cache", cache_path)
 
@@ -133,11 +153,11 @@ def download_helper(usi, args, extension_filter=None):
                         output_result_dict["status"] = "ERROR"
                     else:
                         # Saving file to cache if we don't
-                        r = requests.get(download_url, stream=True)
+                        
                         try:
-                            with open(os.path.join(args.output_folder, cache_filename), 'wb') as fd:
-                                for chunk in r.iter_content(chunk_size=128):
-                                    fd.write(chunk)
+                            cache_filename = os.path.join(args.output_folder, cache_filename)
+                            
+                            _download_mzml(usi, cache_filename)
 
                             # Creating symlink
                             if not os.path.exists(target_path):
@@ -147,9 +167,7 @@ def download_helper(usi, args, extension_filter=None):
                                 output_result_dict["status"] = "DUPLICATE_FILENAME"
                         except:
                             # We are likely writing to read only file system for the cache
-                            with open(target_path, 'wb') as fd:
-                                for chunk in r.iter_content(chunk_size=128):
-                                    fd.write(chunk)
+                            _download_mzml(usi, target_path)
 
                         # Checking the status code
                         if r.status_code == 200:
@@ -164,13 +182,18 @@ def download_helper(usi, args, extension_filter=None):
                     output_result_dict["status"] = "ERROR"
 
                 else:
-                    # download in chunks using requests
-                    r = requests.get(download_url, stream=True)
-                    with open(target_path, 'wb') as fd:
-                        for chunk in r.iter_content(chunk_size=128):
-                            fd.write(chunk)
+                    # if the target path file is already there, then we don't need to do anything
+                    if os.path.exists(target_path):
+                        output_result_dict["status"] = "EXISTS_IN_OUTPUT"
+                    
+                    else:
+                        # download in chunks using requests
+                        r = requests.get(download_url, stream=True)
+                        with open(target_path, 'wb') as fd:
+                            for chunk in r.iter_content(chunk_size=128):
+                                fd.write(chunk)
 
-                    output_result_dict["status"] = "DOWNLOADED_INTO_OUTPUT_WITHOUT_CACHE"
+                        output_result_dict["status"] = "DOWNLOADED_INTO_OUTPUT_WITHOUT_CACHE"
 
         else:
             output_result_dict["status"] = "ERROR"
