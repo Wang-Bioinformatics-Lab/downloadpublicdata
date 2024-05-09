@@ -16,6 +16,9 @@ import warnings
 import time
 from sanitize_filename import sanitize
 
+#DATASET_CACHE_URL_BASE = "https://datasetcache.gnps2.org"
+DATASET_CACHE_URL_BASE = "http://169.235.26.140:5234"
+
 def _determine_download_url(usi):
     # Getting the path to the original file
     
@@ -97,11 +100,14 @@ def _download(mri, target_filename):
         return _download_mzml(mri, target_filename)
     elif file_extension.lower() == ".d":
         return _download_vendor(mri, target_filename)
+    elif file_extension.lower() == ".wiff":
+        return _download_vendor(mri, target_filename)
+    elif file_extension.lower() == ".raw":
+        return _download_vendor(mri, target_filename)
     else:
         raise Exception("Unsupported")
-
+    
     return 0
-
 
 def _download_mzml(usi, target_filename):
     # here we don't need to do any conversion and can get directly from the source
@@ -116,14 +122,14 @@ def _download_mzml(usi, target_filename):
 
 def _download_vendor(mri, target_filename):
     # we do need to do conversion so we'll hit the conversion service to 
-    convert_request_url = "https://datasetcache.gnps2.org/convert/request"
+    convert_request_url = "{}/convert/request".format(DATASET_CACHE_URL_BASE)
     params = {}
     params["mri"] = mri
 
     r = requests.get(convert_request_url, params=params)
 
     # waiting for the status
-    convert_status_url = "https://datasetcache.gnps2.org/convert/status"
+    convert_status_url = "{}/convert/status".format(DATASET_CACHE_URL_BASE)
     params = {}
 
     # lets try waiting 5 min
@@ -136,7 +142,7 @@ def _download_vendor(mri, target_filename):
             time.sleep(60)
 
     # Lets download
-    download_url = "https://datasetcache.gnps2.org/convert/download"
+    download_url = "{}/convert/download".format(DATASET_CACHE_URL_BASE)
 
     r = requests.get(download_url, stream=True)
     if r.status_code == 200:
