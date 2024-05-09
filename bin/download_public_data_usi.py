@@ -16,8 +16,8 @@ import warnings
 import time
 from sanitize_filename import sanitize
 
-#DATASET_CACHE_URL_BASE = "https://datasetcache.gnps2.org"
-DATASET_CACHE_URL_BASE = "http://169.235.26.140:5234"
+DATASET_CACHE_URL_BASE = "https://datasetcache.gnps2.org"
+#DATASET_CACHE_URL_BASE = "http://169.235.26.140:5234"
 
 def _determine_download_url(usi):
     # Getting the path to the original file
