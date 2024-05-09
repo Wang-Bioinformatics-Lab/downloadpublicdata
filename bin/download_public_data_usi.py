@@ -44,7 +44,8 @@ def _determine_ms_filename(usi):
 
     # Checking if filename is valid extension that we could infer the filename
     lower_fileportion = fileportion.lower()
-    if lower_fileportion.endswith(".mzml") or lower_fileportion.endswith(".mzxml") or lower_fileportion.endswith(".mgf"):
+    if lower_fileportion.endswith(".mzml") or lower_fileportion.endswith(".mzxml") or lower_fileportion.endswith(".mgf") or \
+        lower_fileportion.endswith(".d") or lower_fileportion.endswith(".wiff") or lower_fileportion.endswith(".raw"):
         fileportion = os.path.basename(fileportion)
 
         # make this safe on disk
@@ -92,17 +93,17 @@ def _determine_ms_filename(usi):
 
     return os.path.basename(download_url)
 
-def _download(mri, target_filename):
+def _download(mri, target_filename, datafile_extension):
     # checking filename extension
     filename_without_extension, file_extension = os.path.splitext(target_filename)
 
-    if file_extension.lower() == ".mzml":
+    if datafile_extension.lower() == ".mzml":
         return _download_mzml(mri, target_filename)
-    elif file_extension.lower() == ".d":
+    elif datafile_extension.lower() == ".d":
         return _download_vendor(mri, target_filename)
-    elif file_extension.lower() == ".wiff":
+    elif datafile_extension.lower() == ".wiff":
         return _download_vendor(mri, target_filename)
-    elif file_extension.lower() == ".raw":
+    elif datafile_extension.lower() == ".raw":
         return _download_vendor(mri, target_filename)
     else:
         raise Exception("Unsupported")
@@ -126,25 +127,28 @@ def _download_vendor(mri, target_filename):
     params = {}
     params["mri"] = mri
 
+    print("REQUEST CONVERSION")
+
     r = requests.get(convert_request_url, params=params)
 
     # waiting for the status
     convert_status_url = "{}/convert/status".format(DATASET_CACHE_URL_BASE)
-    params = {}
 
     # lets try waiting 5 min
     for i in range(5):
+
         r = requests.get(convert_status_url, params=params)
         if r.status_code == 200:
             if r.json()["status"] == True:
                 break
         else:
+            print("WAITING", r.status_code)
             time.sleep(60)
 
     # Lets download
     download_url = "{}/convert/download".format(DATASET_CACHE_URL_BASE)
 
-    r = requests.get(download_url, stream=True)
+    r = requests.get(download_url, params=params, stream=True)
     if r.status_code == 200:
         with open(target_filename, 'wb') as fd:
             for chunk in r.iter_content(chunk_size=128):
@@ -161,15 +165,23 @@ def download_helper(usi, args, extension_filter=None):
     
         output_result_dict = {}
         output_result_dict["usi"] = usi
+        target_filename = None # This is the target converted filename
+        mri_original_extension = None
 
         # USI Filename
         try:
-            target_filename = _determine_ms_filename(usi)
+            ms_filename = _determine_ms_filename(usi)
 
             # Filtering extensions
             if extension_filter is not None:
-                if not target_filename.lower().endswith(extension_filter):
+                if not ms_filename.lower().endswith(extension_filter):
                     return None
+                
+            # Here we determine the actual extension of the ms_filename
+            filename_without_extension, file_extension = os.path.splitext(ms_filename)
+
+            mri_original_extension = file_extension
+            target_filename = ms_filename + ".mzML"
         except:
             return None
 
@@ -222,7 +234,7 @@ def download_helper(usi, args, extension_filter=None):
                         try:
                             cache_filename = os.path.join(args.output_folder, cache_filename)
                             
-                            _download(usi, cache_filename)
+                            _download(usi, cache_filename, mri_original_extension)
 
                             # Creating symlink
                             if not os.path.exists(target_path):
@@ -233,7 +245,7 @@ def download_helper(usi, args, extension_filter=None):
                         except:
                             # We are likely writing to read only file system for the cache
                             try:
-                                _download(usi, target_path)
+                                _download(usi, target_path, mri_original_extension)
                             except:
                                 output_result_dict["status"] = "DOWNLOAD_ERROR"
             else:
@@ -248,7 +260,7 @@ def download_helper(usi, args, extension_filter=None):
                         output_result_dict["status"] = "ERROR"
                     else:
                         # download in chunks using requests
-                        _download(usi, target_path)
+                        _download(usi, target_path, mri_original_extension)
 
                         output_result_dict["status"] = "DOWNLOADED_INTO_OUTPUT_WITHOUT_CACHE"
 
