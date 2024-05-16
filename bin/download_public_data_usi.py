@@ -312,7 +312,11 @@ def main():
         if args.input_download_file.endswith(".yaml"):
             # Loading yaml file
             parameters = yaml.load(open(args.input_download_file), Loader=yaml.SafeLoader)
-            usi_list = parameters["usi"].split("\n")
+            try:
+                usi_list = parameters["usi"].split("\n")
+            except:
+                # We have a problem parsing
+                usi_list = []
         elif args.input_download_file.endswith(".tsv"):
             df = pd.read_csv(args.input_download_file, sep="\t")
             usi_list = df["usi"].tolist()
