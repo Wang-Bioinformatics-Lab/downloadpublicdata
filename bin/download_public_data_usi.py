@@ -33,6 +33,17 @@ def _determine_download_url(usi):
 
     return None
 
+def _determine_foldername(usi):
+    """
+    We are going to get the folder name that contains the datasetid together with the original folder structure in the usi
+    """ 
+    usi_splits = usi.split(":")
+    datasetid = usi_splits[1]
+    fileportion = usi_splits[2]
+    folder_name = os.path.dirname(fileportion)
+    dataid_folder = os.path.join(datasetid, folder_name)
+    return dataid_folder
+
 
 def _determine_ms_filename(usi):
     """
@@ -121,6 +132,23 @@ def _download_mzml(usi, target_filename):
 
     return 0
 
+def _determine_target_subfolder(usi):
+    # to determine the target subfolder based on the source of the dataset
+    # a dataset starts with "MSV" goes to massive subfolder, a dataset starts with "MTBLS" goes to MTBLS subfolder 
+    # and a dataset starts with "ST" goes to ST subfoldre
+    target_subfolder = "other"
+    if usi.startswith("mzspec:MSV"):
+        target_subfolder = "MassIVE"
+    elif usi.startswith("mzspec:MTBLS"):
+        target_subfolder = "MTBLS"
+    elif usi.startswith("mzspec:ST"):
+        target_subfolder = "ST"
+    else:
+        target_subfolder = "other"
+
+    return target_subfolder
+
+    
 def _download_vendor(mri, target_filename):
     # we do need to do conversion so we'll hit the conversion service to 
     convert_request_url = "{}/convert/request".format(DATASET_CACHE_URL_BASE)
@@ -170,7 +198,7 @@ def download_helper(usi, args, extension_filter=None):
         # USI Filename
         try:
             ms_filename = _determine_ms_filename(usi)
-
+            target_subfolder_name = _determine_target_subfolder(usi)
             # Filtering extensions
             if extension_filter is not None:
                 if not ms_filename.lower().endswith(extension_filter):
@@ -180,23 +208,43 @@ def download_helper(usi, args, extension_filter=None):
             filename_without_extension, file_extension = os.path.splitext(ms_filename)
 
             mri_original_extension = file_extension
-            target_filename = ms_filename + ".mzML"
+            #target_filename = ms_filename + ".mzML"
+            target_filename = ms_filename 
         except:
             return None
 
         if target_filename is not None:
-            if args.nestfiles is False:
-                target_path = os.path.join(args.output_folder, target_filename)
-            else:
+            # add data source folder to output_folder
+            target_folder = os.path.join(args.output_folder, target_subfolder_name) 
+            # if args.nestfiles is nest:
+            if args.nestfiles == "nest":
                 usi_hash = uuid.uuid3(uuid.NAMESPACE_DNS, usi)
                 folder_hash = str(usi_hash)[:2]
 
-                target_dir = os.path.join(args.output_folder, folder_hash)
+                #target_dir = os.path.join(args.output_folder, folder_hash)
+                target_dir = os.path.join(target_folder, folder_hash)
 
                 if not os.path.exists(target_dir):
                     os.makedirs(target_dir)
 
                 target_path = os.path.join(target_dir, target_filename)
+            elif args.nestfiles == "recreate":
+                # recreate the folder structure
+                dataset_folder =  _determine_foldername(usi)
+                #target_dir = os.path.join(args.output_folder, dataset_folder)
+                target_dir = os.path.join(target_folder, dataset_folder)
+                if not os.path.exists(target_dir):
+                    os.makedirs(target_dir)
+
+                target_path = os.path.join(target_dir, target_filename)
+                
+
+            else: # flat as default
+                if not os.path.exists(target_folder):
+                    os.makedirs(target_folder)
+
+                target_path = os.path.join(target_folder, target_filename)
+
 
             output_result_dict["target_path"] = target_path
 
@@ -287,7 +335,7 @@ def main():
     parser.add_argument('output_folder', help='output_folder')
     parser.add_argument('output_summary', help='output_summary')
     parser.add_argument('--cache_directory', default=None, help='folder of existing data')
-    parser.add_argument('--nestfiles', help='Nest mass spec files in a hashed folder so its not all in the same directory', action='store_true', default=False)
+    parser.add_argument('--nestfiles', help='Nest mass spec files in a hashed folder so its not all in the same directory', default='flat')
     parser.add_argument('--threads', default=1, type=int, help="Number of threads")
     parser.add_argument('--progress', help='Show progress bar', action='store_true', default=False)
     parser.add_argument('--extension_filter', default=None, help="Filter to only download certain extensions. Should be formatted as a semicolon separated list")
