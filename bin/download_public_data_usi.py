@@ -369,7 +369,7 @@ def main():
             df = pd.read_csv(args.input_download_file, sep="\t")
             usi_list = df["usi"].tolist()
         else:
-            df = pd.read_csv(args.input_download_file, sep=None)
+            df = pd.read_csv(args.input_download_file, sep="\t")
             usi_list = df["usi"].tolist()
 
         # Cleaning USI list
