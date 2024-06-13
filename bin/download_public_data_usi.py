@@ -368,6 +368,9 @@ def main():
         elif args.input_download_file.endswith(".tsv"):
             df = pd.read_csv(args.input_download_file, sep="\t")
             usi_list = df["usi"].tolist()
+        else:
+            df = pd.read_csv(args.input_download_file, sep=None)
+            usi_list = df["usi"].tolist()
 
         # Cleaning USI list
         usi_list = [usi.lstrip().rstrip() for usi in usi_list]
