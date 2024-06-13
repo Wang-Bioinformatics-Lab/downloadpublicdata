@@ -108,16 +108,21 @@ def _download(mri, target_filename, datafile_extension):
     # checking filename extension
     filename_without_extension, file_extension = os.path.splitext(target_filename)
 
+    temp_mangled_filename = str(uuid.uuid4())
+
     if datafile_extension.lower() == ".mzml":
-        return _download_mzml(mri, target_filename)
+        return _download_mzml(mri, temp_mangled_filename)
     elif datafile_extension.lower() == ".d":
-        return _download_vendor(mri, target_filename)
+        return _download_vendor(mri, temp_mangled_filename)
     elif datafile_extension.lower() == ".wiff":
-        return _download_vendor(mri, target_filename)
+        return _download_vendor(mri, temp_mangled_filename)
     elif datafile_extension.lower() == ".raw":
-        return _download_vendor(mri, target_filename)
+        return _download_vendor(mri, temp_mangled_filename)
     else:
         raise Exception("Unsupported")
+
+    # Now we can try to move this file from the temp to the target
+    os.move(temp_mangled_filename, target_filename)
     
     return 0
 
