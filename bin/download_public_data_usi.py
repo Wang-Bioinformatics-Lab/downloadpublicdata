@@ -199,6 +199,7 @@ def download_helper(usi, args, extension_filter=None):
         try:
             ms_filename = _determine_ms_filename(usi)
             target_subfolder_name = _determine_target_subfolder(usi)
+                
             # Filtering extensions
             if extension_filter is not None:
                 if not ms_filename.lower().endswith(extension_filter):
@@ -229,6 +230,9 @@ def download_helper(usi, args, extension_filter=None):
 
                 target_path = os.path.join(target_dir, target_filename)
             elif args.nestfiles == "recreate":
+                if target_subfolder_name == "other":
+                    return None
+                
                 # recreate the folder structure
                 dataset_folder =  _determine_foldername(usi)
                 #target_dir = os.path.join(args.output_folder, dataset_folder)
