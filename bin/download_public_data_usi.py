@@ -213,7 +213,6 @@ def download_helper(usi, args, extension_filter=None):
             filename_without_extension, file_extension = os.path.splitext(ms_filename)
 
             mri_original_extension = file_extension
-            #target_filename = ms_filename + ".mzML"
             target_filename = ms_filename 
         except:
             return None
@@ -226,7 +225,6 @@ def download_helper(usi, args, extension_filter=None):
                 usi_hash = uuid.uuid3(uuid.NAMESPACE_DNS, usi)
                 folder_hash = str(usi_hash)[:2]
 
-                #target_dir = os.path.join(args.output_folder, folder_hash)
                 target_dir = os.path.join(target_folder, folder_hash)
 
                 if not os.path.exists(target_dir):
@@ -239,7 +237,6 @@ def download_helper(usi, args, extension_filter=None):
                 
                 # recreate the folder structure
                 dataset_folder =  _determine_foldername(usi)
-                #target_dir = os.path.join(args.output_folder, dataset_folder)
                 target_dir = os.path.join(target_folder, dataset_folder)
                 if not os.path.exists(target_dir):
                     os.makedirs(target_dir)
@@ -289,9 +286,6 @@ def download_helper(usi, args, extension_filter=None):
                         
                         try:
                             cache_filename = os.path.join(args.output_folder, cache_filename)
-                            
-                            #_download(usi, cache_filename, mri_original_extension)
-                            
                             _download(usi, cache_filename, mri_original_extension)
                             
 
