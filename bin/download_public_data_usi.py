@@ -220,7 +220,7 @@ def download_helper(usi, args, extension_filter=None):
         if target_filename is not None:
             # add data source folder to output_folder
             target_folder = os.path.join(args.output_folder, target_subfolder_name) 
-            # if args.nestfiles is nest:
+
             if args.nestfiles == "nest":
                 usi_hash = uuid.uuid3(uuid.NAMESPACE_DNS, usi)
                 folder_hash = str(usi_hash)[:2]
@@ -242,8 +242,6 @@ def download_helper(usi, args, extension_filter=None):
                     os.makedirs(target_dir)
 
                 target_path = os.path.join(target_dir, target_filename)
-                
-
             else: # flat as default
                 if not os.path.exists(target_folder):
                     os.makedirs(target_folder)
