@@ -109,7 +109,6 @@ def _download(mri, target_filename, datafile_extension):
     filename_without_extension, file_extension = os.path.splitext(target_filename)
 
     temp_mangled_filename = "temp_" + str(uuid.uuid4())
-    #print("6_temp_mangled_filename" + temp_mangled_filename + "\ttarget_filename" + target_filename)
     if datafile_extension.lower() == ".mzml":
         return_value = _download_mzml(mri, temp_mangled_filename)
     elif datafile_extension.lower() == ".d":
@@ -121,7 +120,6 @@ def _download(mri, target_filename, datafile_extension):
     else:
          raise Exception("Unsupported")
 
-    #print("7_temp_mangled_filename" + temp_mangled_filename + "\ttarget_filename:" + target_filename)
     
     # Now we can try to move this file from the temp to the target
     os.rename(temp_mangled_filename, target_filename)
@@ -314,7 +312,6 @@ def download_helper(usi, args, extension_filter=None):
                         except:
                             # We are likely writing to read only file system for the cache
                             try:
-                                print("3_target_path\t" + target_path)
                                 _download(usi, target_path, mri_original_extension)
                             except KeyboardInterrupt:
                                 raise
@@ -333,10 +330,7 @@ def download_helper(usi, args, extension_filter=None):
                         output_result_dict["status"] = "ERROR"
                     else:
                         # download in chunks using requests
-                        #print("4_target_path\t" + target_path)
                         _download(usi, target_path, mri_original_extension)
-                        #print("5_target_path\t" + target_path + "\t" + str(temp_local_downloaded_file)) why this line is not printed?
-                        #os.rename(temp_local_downloaded_file, target_path)
 
                         output_result_dict["status"] = "DOWNLOADED_INTO_OUTPUT_WITHOUT_CACHE"
 
