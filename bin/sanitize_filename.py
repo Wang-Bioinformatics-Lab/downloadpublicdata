@@ -47,4 +47,5 @@ def sanitize(filename):
         filename = filename.rstrip(". ")
         if len(filename) == 0:
             filename = "__"
+            
     return filename

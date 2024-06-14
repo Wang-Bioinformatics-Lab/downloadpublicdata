@@ -108,23 +108,22 @@ def _download(mri, target_filename, datafile_extension):
     # checking filename extension
     filename_without_extension, file_extension = os.path.splitext(target_filename)
 
-    temp_mangled_filename = str(uuid.uuid4())
-
+    temp_mangled_filename = "temp_" + str(uuid.uuid4())
     if datafile_extension.lower() == ".mzml":
-        return _download_mzml(mri, temp_mangled_filename)
+        return_value = _download_mzml(mri, temp_mangled_filename)
     elif datafile_extension.lower() == ".d":
-        return _download_vendor(mri, temp_mangled_filename)
+        return_value = _download_vendor(mri, temp_mangled_filename)
     elif datafile_extension.lower() == ".wiff":
-        return _download_vendor(mri, temp_mangled_filename)
+        return_value = _download_vendor(mri, temp_mangled_filename)
     elif datafile_extension.lower() == ".raw":
-        return _download_vendor(mri, temp_mangled_filename)
+        return_value = _download_vendor(mri, temp_mangled_filename)
     else:
-        raise Exception("Unsupported")
+         raise Exception("Unsupported")
 
-    # Now we can try to move this file from the temp to the target
-    os.move(temp_mangled_filename, target_filename)
     
-    return 0
+    # Now we can try to move this file from the temp to the target
+    os.rename(temp_mangled_filename, target_filename)
+    return return_value
 
 def _download_mzml(usi, target_filename):
     # here we don't need to do any conversion and can get directly from the source
@@ -214,20 +213,17 @@ def download_helper(usi, args, extension_filter=None):
             filename_without_extension, file_extension = os.path.splitext(ms_filename)
 
             mri_original_extension = file_extension
-            #target_filename = ms_filename + ".mzML"
             target_filename = ms_filename 
         except:
             return None
 
         if target_filename is not None:
-            # add data source folder to output_folder
-            target_folder = os.path.join(args.output_folder, target_subfolder_name) 
-            # if args.nestfiles is nest:
+            target_folder = args.output_folder 
+
             if args.nestfiles == "nest":
                 usi_hash = uuid.uuid3(uuid.NAMESPACE_DNS, usi)
                 folder_hash = str(usi_hash)[:2]
 
-                #target_dir = os.path.join(args.output_folder, folder_hash)
                 target_dir = os.path.join(target_folder, folder_hash)
 
                 if not os.path.exists(target_dir):
@@ -235,19 +231,18 @@ def download_helper(usi, args, extension_filter=None):
 
                 target_path = os.path.join(target_dir, target_filename)
             elif args.nestfiles == "recreate":
+                target_folder = os.path.join(args.output_folder, target_subfolder_name) 
                 if target_subfolder_name == "other":
                     return None
                 
                 # recreate the folder structure
+                # add data source folder to output_folder
                 dataset_folder =  _determine_foldername(usi)
-                #target_dir = os.path.join(args.output_folder, dataset_folder)
                 target_dir = os.path.join(target_folder, dataset_folder)
                 if not os.path.exists(target_dir):
                     os.makedirs(target_dir)
 
                 target_path = os.path.join(target_dir, target_filename)
-                
-
             else: # flat as default
                 if not os.path.exists(target_folder):
                     os.makedirs(target_folder)
@@ -257,6 +252,7 @@ def download_helper(usi, args, extension_filter=None):
 
             output_result_dict["target_path"] = target_path
 
+            
             # Checking the cache
             if args.cache_directory is not None and os.path.exists(args.cache_directory):
 
@@ -289,8 +285,8 @@ def download_helper(usi, args, extension_filter=None):
                         
                         try:
                             cache_filename = os.path.join(args.output_folder, cache_filename)
-                            
                             _download(usi, cache_filename, mri_original_extension)
+                            
 
                             # Creating symlink
                             if not os.path.exists(target_path):
@@ -331,7 +327,6 @@ def download_helper(usi, args, extension_filter=None):
     except KeyboardInterrupt:
         raise
     except Exception as e:
-        print("Error", e)
         print("Error", e, file=sys.stderr)
         output_result_dict["status"] = "ERROR"
     
