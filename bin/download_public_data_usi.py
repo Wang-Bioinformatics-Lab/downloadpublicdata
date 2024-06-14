@@ -219,7 +219,8 @@ def download_helper(usi, args, extension_filter=None):
 
         if target_filename is not None:
             # add data source folder to output_folder
-            target_folder = os.path.join(args.output_folder, target_subfolder_name) 
+            #target_folder = os.path.join(args.output_folder, target_subfolder_name)
+            target_folder = args.output_folder 
             # if args.nestfiles is nest:
             if args.nestfiles == "nest":
                 usi_hash = uuid.uuid3(uuid.NAMESPACE_DNS, usi)
@@ -232,6 +233,7 @@ def download_helper(usi, args, extension_filter=None):
 
                 target_path = os.path.join(target_dir, target_filename)
             elif args.nestfiles == "recreate":
+                target_folder = os.path.join(args.output_folder, target_subfolder_name) 
                 if target_subfolder_name == "other":
                     return None
                 
