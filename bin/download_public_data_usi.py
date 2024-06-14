@@ -326,7 +326,6 @@ def download_helper(usi, args, extension_filter=None):
     except KeyboardInterrupt:
         raise
     except Exception as e:
-        print("Error", e)
         print("Error", e, file=sys.stderr)
         output_result_dict["status"] = "ERROR"
     
