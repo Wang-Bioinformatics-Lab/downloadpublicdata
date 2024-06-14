@@ -122,7 +122,7 @@ def _download(mri, target_filename, datafile_extension):
 
     
     # Now we can try to move this file from the temp to the target
-    os.rename(temp_mangled_filename, target_filename)
+    shutil.move(temp_mangled_filename, target_filename)
     return return_value
 
 def _download_mzml(usi, target_filename):
