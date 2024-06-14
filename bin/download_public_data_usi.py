@@ -123,8 +123,6 @@ def _download(mri, target_filename, datafile_extension):
     
     # Now we can try to move this file from the temp to the target
     os.rename(temp_mangled_filename, target_filename)
-    #os.remove(temp_mangled_filename)
-    #return temp_mangled_filename
     return return_value
 
 def _download_mzml(usi, target_filename):
@@ -296,9 +294,6 @@ def download_helper(usi, args, extension_filter=None):
                             
                             _download(usi, cache_filename, mri_original_extension)
                             
-                            #os.rename(temp_local_downloaded_file, target_path)
-                            #os.remove(temp_local_downloaded_file)
-
 
                             # Creating symlink
                             if not os.path.exists(target_path):
