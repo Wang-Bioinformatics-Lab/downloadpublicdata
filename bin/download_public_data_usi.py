@@ -111,6 +111,10 @@ def _download(mri, target_filename, datafile_extension):
     temp_mangled_filename = "temp_" + str(uuid.uuid4())
     if datafile_extension.lower() == ".mzml":
         return_value = _download_mzml(mri, temp_mangled_filename)
+    elif datafile_extension.lower() == ".mzxml":
+        return_value = _download_mzml(mri, temp_mangled_filename)
+    elif datafile_extension.lower() == ".mgf":
+        return_value = _download_mzml(mri, temp_mangled_filename)
     elif datafile_extension.lower() == ".d":
         return_value = _download_vendor(mri, temp_mangled_filename)
     elif datafile_extension.lower() == ".wiff":
