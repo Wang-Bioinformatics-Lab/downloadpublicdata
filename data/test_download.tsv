@@ -13,6 +13,25 @@ mzspec:ST001154:MX363875 Flenniken BA Ster Plate 2-39-23-441144 (2).mzML
 mzspec:ST002254:ST002254/33893.mzML
 mzspec:ST002168:SiMetData/B007_3.mzML
 mzspec:ST001991:Serumrawdata/25072019_Bile_Acid_Rerun_Plate_6-5001178.mzML
+mzspec:MSV000079506:raw/XZ_140101_A4,M2,gluc_hp81_bMSMS.mzML
+mzspec:MSV000079497:peak/w123.mzML.mzML
+"mzspec:MSV000079506:raw/XZ_131231_A5,M2,gluc_bMSMS.mzML"
+"mzspec:MSV000079506:raw/XZ_131231_A6,M2,gluc_hp1228_aMSMS.mzML"
+"mzspec:MSV000079506:raw/XZ_140101_A12,M2,gluc_hp_bMSMS.mzML"
+"mzspec:MSV000079506:raw/XZ_140101_A4,M2,gluc_hp81_bMSMS.mzML"
+"mzspec:MSV000079506:raw/XZ_140103_A1,M2,gluc_hp56_bMSMS.mzML"
+"mzspec:MSV000079506:raw/XZ_140103_A2,M2,gluc_hp_aMSMS.mzML"
+"mzspec:MSV000079506:raw/XZ_140121_A3,M2,gluc_php_bMSMS.mzML"
+"mzspec:MSV000079506:raw/XZ_140121_A7,M2,gluc_php_bMSMS.mzML"
+mzspec:MSV000079506:raw/XZ_A8,chy_mz1015_raxx60_130502.mzML
+mzspec:MSV000079542:ccms_peak/Peak_List_Files/OMICS_IM102_691_1d_Lipid_2_005_NEG_150mm_10May15_Polaroid_14-12-16.mzML.mzML
+mzspec:MSV000081381:ccms_peak/198rootbacteria/140M.mzML
+mzspec:MSV000081381:ccms_peak/198rootbacteria/142E.mzML
+mzspec:MSV000081381:ccms_peak/198rootbacteria/140E.mzML.mzML
+mzspec:MSV00000FAKE:ccms_peak/raw/S_P3_FAKE.mzML
+mzspec:ST00FAKE:ST002254/33893_FAKE.mzML
+mzspec:MTBLSFAKE:FILES/DERIVED_FILES/POS/25-coc1_pos_FAKE.mzML
 mzspec:GNPS2:TASK-e9f903c9ff35451581175cb05c64a9c1-spectra/sulfamethizine_positive_2pt5uL_02.mzXML:scan:18
 mzspec:MTBLS103:FILES/PIO_18MO_830049_QQQ.mzXML
 mzspec:ST000003:ST000003/StemCell Data and Raw Files/iPSC-T1R1.mzXML
+mzspec:MSV000078982:peak/1_WilliamsFreshwaterCyanosStandardsRawDataEntireRun_mzXML/PW-10_v5_P1./MassIVE/MSV000078982/peak/1_WilliamsFreshwaterCyanosStandardsRawDataEntireRun_mzXML-B-1_Puwainaphycin_A_1234amu_01_15616.mzML
