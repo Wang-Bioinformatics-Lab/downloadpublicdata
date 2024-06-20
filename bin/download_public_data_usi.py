@@ -126,7 +126,24 @@ def _download(mri, target_filename, datafile_extension):
 
     
     # Now we can try to move this file from the temp to the target
-    os.rename(temp_mangled_filename, target_filename)
+    #os.rename(temp_mangled_filename, target_filename) # this will not work if temp file and target file not same partition
+    # return_value is 0 even when the mri is invalid. 
+    # And when the mri is invalid, MassIVE returns a html file that contains error message
+    # and MTBLS return a small file that contains a message indicating that the no permission to access the requested resource
+    # and the ST/MWB returns nothing
+    # we will check the size of the downloaded temp file, if the size is > 10K, then move it to final location,
+    # otherwise just delete the temp file
+    # Get the size of the file in bytes
+    
+    file_size = os.path.getsize(temp_mangled_filename)
+    if(file_size < 10000):
+        print(mri + " downloading failed, remove temporary file " + temp_mangled_filename)
+        shutil.move(temp_mangled_filename, target_filename)
+        #os.remove(temp_mangled_filename)
+    else:
+        print(mri + " downloaded successfully, now move " + temp_mangled_filename + " to target location at " + target_filename)
+        shutil.move(temp_mangled_filename, target_filename)
+    
     return return_value
 
 def _download_mzml(usi, target_filename):
@@ -137,7 +154,8 @@ def _download_mzml(usi, target_filename):
     with open(target_filename, 'wb') as fd:
         for chunk in r.iter_content(chunk_size=128):
             fd.write(chunk)
-
+    
+    # is it possible to check if the download failed or not and return different value accordingly
     return 0
 
 def _determine_target_subfolder(usi):
@@ -146,7 +164,7 @@ def _determine_target_subfolder(usi):
     # and a dataset starts with "ST" goes to ST subfoldre
     target_subfolder = "other"
     if usi.startswith("mzspec:MSV"):
-        target_subfolder = "MassIVE"
+        target_subfolder = "MassIVE" # GNPS is also MassIVE
     elif usi.startswith("mzspec:MTBLS"):
         target_subfolder = "MTBLS"
     elif usi.startswith("mzspec:ST"):
