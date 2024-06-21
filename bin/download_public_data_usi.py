@@ -66,9 +66,7 @@ def _determine_ms_filename(usi):
 
     # Checking if we can get the filename from the API
     download_url = _determine_download_url(usi)
-
-    print(download_url)
-
+   
     if download_url is None:
         return None
 
