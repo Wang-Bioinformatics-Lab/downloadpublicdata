@@ -126,7 +126,6 @@ def _download(mri, target_filename, datafile_extension):
 
     
     # Now we can try to move this file from the temp to the target
-    #os.rename(temp_mangled_filename, target_filename) # this will not work if temp file and target file not same partition
     # return_value is 0 even when the mri is invalid. 
     # And when the mri is invalid, MassIVE returns a html file that contains error message
     # and MTBLS return a small file that contains a message indicating that the no permission to access the requested resource
@@ -149,7 +148,8 @@ def _download(mri, target_filename, datafile_extension):
 def _download_mzml(usi, target_filename):
     # here we don't need to do any conversion and can get directly from the source
     download_url = _determine_download_url(usi)
-
+    
+    print(download_url)
     r = requests.get(download_url, stream=True)
     with open(target_filename, 'wb') as fd:
         for chunk in r.iter_content(chunk_size=128):
