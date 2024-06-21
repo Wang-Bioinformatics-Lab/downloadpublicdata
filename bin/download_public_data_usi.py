@@ -66,9 +66,7 @@ def _determine_ms_filename(usi):
 
     # Checking if we can get the filename from the API
     download_url = _determine_download_url(usi)
-
-    print(download_url)
-
+   
     if download_url is None:
         return None
 
@@ -126,18 +124,35 @@ def _download(mri, target_filename, datafile_extension):
 
     
     # Now we can try to move this file from the temp to the target
-    shutil.move(temp_mangled_filename, target_filename)
+    # return_value is 0 even when the mri is invalid. 
+    # And when the mri is invalid, MassIVE returns a html file that contains error message
+    # and MTBLS return a small file that contains a message indicating that the no permission to access the requested resource
+    # and the ST/MWB returns nothing
+    # we will check the size of the downloaded temp file, if the size is > 10K, then move it to final location,
+    # otherwise just delete the temp file
+    # Get the size of the file in bytes
+    
+    file_size = os.path.getsize(temp_mangled_filename)
+    if(file_size < 10000):
+        print(mri + " downloading failed, remove temporary file " + temp_mangled_filename)
+        
+        os.remove(temp_mangled_filename)
+    else:
+        print(mri + " downloaded successfully, now move " + temp_mangled_filename + " to target location at " + target_filename)
+        shutil.move(temp_mangled_filename, target_filename)
+    
     return return_value
 
 def _download_mzml(usi, target_filename):
     # here we don't need to do any conversion and can get directly from the source
     download_url = _determine_download_url(usi)
-
+    
     r = requests.get(download_url, stream=True)
     with open(target_filename, 'wb') as fd:
         for chunk in r.iter_content(chunk_size=128):
             fd.write(chunk)
-
+    
+    # is it possible to check if the download failed or not and return different value accordingly
     return 0
 
 def _determine_target_subfolder(usi):
@@ -146,7 +161,7 @@ def _determine_target_subfolder(usi):
     # and a dataset starts with "ST" goes to ST subfoldre
     target_subfolder = "other"
     if usi.startswith("mzspec:MSV"):
-        target_subfolder = "MassIVE"
+        target_subfolder = "MassIVE" # GNPS is also MassIVE
     elif usi.startswith("mzspec:MTBLS"):
         target_subfolder = "MTBLS"
     elif usi.startswith("mzspec:ST"):
