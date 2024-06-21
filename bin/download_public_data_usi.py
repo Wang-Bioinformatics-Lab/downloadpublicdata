@@ -147,7 +147,6 @@ def _download_mzml(usi, target_filename):
     # here we don't need to do any conversion and can get directly from the source
     download_url = _determine_download_url(usi)
     
-    print(download_url)
     r = requests.get(download_url, stream=True)
     with open(target_filename, 'wb') as fd:
         for chunk in r.iter_content(chunk_size=128):
