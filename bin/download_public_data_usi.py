@@ -138,8 +138,8 @@ def _download(mri, target_filename, datafile_extension):
     file_size = os.path.getsize(temp_mangled_filename)
     if(file_size < 10000):
         print(mri + " downloading failed, remove temporary file " + temp_mangled_filename)
-        shutil.move(temp_mangled_filename, target_filename)
-        #os.remove(temp_mangled_filename)
+        #shutil.move(temp_mangled_filename, target_filename)
+        os.remove(temp_mangled_filename)
     else:
         print(mri + " downloaded successfully, now move " + temp_mangled_filename + " to target location at " + target_filename)
         shutil.move(temp_mangled_filename, target_filename)
