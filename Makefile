@@ -16,6 +16,12 @@ test_raw_small:
 test_raw:
 	python ./bin/download_public_data_usi.py ./data/test_download_raw.tsv ./data/filedownloads/test_raw ./data/summary.tsv
 
+test_raw_trouble:
+	python ./bin/download_public_data_usi.py ./data/test_download_raw_trouble.tsv ./data/filedownloads/test_raw_trouble ./data/summary.tsv
+
+test_raw_trouble_noconversion:
+	python ./bin/download_public_data_usi.py ./data/test_download_raw_trouble.tsv ./data/filedownloads/test_raw_trouble ./data/summary.tsv --noconversion
+
 test_invalid:
 	python ./bin/download_public_data_usi.py ./data/test_download_invalid.tsv ./data/filedownloads/test_invalid ./data/summary.tsv
 
