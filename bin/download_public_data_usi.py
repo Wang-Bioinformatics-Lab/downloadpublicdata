@@ -208,6 +208,8 @@ def _download_vendor(mri, target_filename):
     return "CONVERTED"
 
 def download_helper(usi, args, extension_filter=None, noconversion=False):
+    processdownloadraw = False
+
     try:
         if len(usi) < 5:
             return None
@@ -234,6 +236,7 @@ def download_helper(usi, args, extension_filter=None, noconversion=False):
             if mri_original_extension.lower() in [".d", ".wiff", ".raw"]:
                 if noconversion:
                     target_filename = ms_filename
+                    processdownloadraw = True
                 else:
                     target_filename = filename_without_extension + ".mzML"
             else:
@@ -276,7 +279,6 @@ def download_helper(usi, args, extension_filter=None, noconversion=False):
 
             output_result_dict["target_path"] = target_path
 
-            
             # Checking the cache
             if args.cache_directory is not None and os.path.exists(args.cache_directory):
 
@@ -334,8 +336,14 @@ def download_helper(usi, args, extension_filter=None, noconversion=False):
                 # if the target path file is already there, then we don't need to do anything
                 if os.path.exists(target_path):
                     output_result_dict["status"] = "EXISTS_IN_OUTPUT"
-                
                 else:
+                    if processdownloadraw:
+                        print("Downloading the raw data without conversion", target_path)
+                        import download_raw
+                        download_raw.download_raw_mri(usi, target_path)
+                        
+                        return
+
                     download_url = _determine_download_url(usi)
 
                     if download_url is None:
@@ -368,6 +376,8 @@ def main():
     parser.add_argument('--raw_usi_input', action='store_true', default=False, help="Specify if input_download_file is a raw USI file")
     parser.add_argument('--noconversion', action='store_true', default=False, help="Specifying to turn off conversion and download the full raw file")
     args = parser.parse_args()
+
+    print(args)
 
     # checking the input file exists
     if not os.path.isfile(args.input_download_file):
