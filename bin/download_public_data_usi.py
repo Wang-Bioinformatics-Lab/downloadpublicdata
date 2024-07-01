@@ -103,8 +103,6 @@ def _determine_ms_filename(usi):
     return os.path.basename(download_url)
 
 def _download(mri, target_filename, datafile_extension):
-    # checking filename extension
-    filename_without_extension, file_extension = os.path.splitext(target_filename)
 
     temp_mangled_filename = "temp_" + str(uuid.uuid4())
     if datafile_extension.lower() == ".mzml":
@@ -134,11 +132,11 @@ def _download(mri, target_filename, datafile_extension):
     
     file_size = os.path.getsize(temp_mangled_filename)
     if(file_size < 10000):
-        print(mri + " downloading failed, remove temporary file " + temp_mangled_filename)
+        print(f"{mri} downloading failed, remove temporary file {temp_mangled_filename}")
         
         os.remove(temp_mangled_filename)
     else:
-        print(mri + " downloaded successfully, now move " + temp_mangled_filename + " to target location at " + target_filename)
+        print(f"{mri} downloaded successfully to target location at {target_filename}")
         shutil.move(temp_mangled_filename, target_filename)
     
     return return_value
@@ -178,6 +176,7 @@ def _download_vendor(mri, target_filename):
     params = {}
     params["mri"] = mri
 
+    print("Requesting Conversion")
     r = requests.get(convert_request_url, params=params)
 
     # waiting for the status
@@ -230,9 +229,12 @@ def download_helper(usi, args, extension_filter=None):
                 
             # Here we determine the actual extension of the ms_filename
             filename_without_extension, file_extension = os.path.splitext(ms_filename)
-
             mri_original_extension = file_extension
-            target_filename = ms_filename 
+
+            if mri_original_extension.lower() in [".d", ".wiff", ".raw"]:
+                target_filename = filename_without_extension + ".mzML"
+            else:
+                target_filename = ms_filename 
         except:
             return None
 
