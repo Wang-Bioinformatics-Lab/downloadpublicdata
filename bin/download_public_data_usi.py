@@ -341,7 +341,7 @@ def download_helper(usi, args, extension_filter=None, noconversion=False):
                         print("Downloading the raw data without conversion", target_path)
                         import download_raw
                         download_raw.download_raw_mri(usi, target_path)
-                        
+
                         return
 
                     download_url = _determine_download_url(usi)
@@ -376,8 +376,6 @@ def main():
     parser.add_argument('--raw_usi_input', action='store_true', default=False, help="Specify if input_download_file is a raw USI file")
     parser.add_argument('--noconversion', action='store_true', default=False, help="Specifying to turn off conversion and download the full raw file")
     args = parser.parse_args()
-
-    print(args)
 
     # checking the input file exists
     if not os.path.isfile(args.input_download_file):
