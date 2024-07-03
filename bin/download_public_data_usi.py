@@ -299,6 +299,13 @@ def download_helper(usi, args, extension_filter=None, noconversion=False):
             if args.existing_dataset_directory is not None:
                 # Checking
                 print("Checking existing dataset directory")
+                path_in_dataset_folder = _determine_dataset_reconstructed_foldername(usi)
+
+                dataset_filepath = os.path.join(args.existing_dataset_directory, path_in_dataset_folder, target_filename)
+
+                # Checking if this exists
+                if os.path.exists(dataset_filepath):
+                    print(dataset_filepath, "exists")
 
             # Checking the cache
             elif args.cache_directory is not None and os.path.exists(args.cache_directory):
