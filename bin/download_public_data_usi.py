@@ -1,19 +1,17 @@
 #!/usr/bin/python
 import sys
 import os
-import json
 import argparse
 from collections import defaultdict
-import csv
 import pandas as pd
-import glob
 import shutil
 import requests
 import yaml
 import uuid
 from tqdm import tqdm
-import warnings
 import time
+
+import download_raw
 from sanitize_filename import sanitize
 
 DATASET_CACHE_URL_BASE = "https://datasetcache.gnps2.org"
@@ -346,7 +344,7 @@ def download_helper(usi, args, extension_filter=None, noconversion=False):
                 else:
                     if processdownloadraw:
                         print("Downloading the raw data without conversion", target_path)
-                        import download_raw
+                        
                         download_raw.download_raw_mri(usi, target_path)
 
                         return
