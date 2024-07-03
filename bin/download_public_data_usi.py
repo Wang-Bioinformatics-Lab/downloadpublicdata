@@ -113,7 +113,7 @@ def _determine_caching_paths(usi, cache_directory, target_filename):
 
     cache_filename = cache_path + "-" + target_filename[-50:].rstrip()
 
-    return cache_filename
+    return cache_filename, cache_path
 
 def _download(mri, target_filename, datafile_extension):
 
@@ -296,13 +296,7 @@ def download_helper(usi, args, extension_filter=None, noconversion=False):
             if args.cache_directory is not None and os.path.exists(args.cache_directory):
                 # TODO: make sure usi is actually only the MRI portions, or else we can get a bunch of repetition
 
-                namespace = uuid.UUID('6ba7b810-9dad-11d1-80b4-00c04fd430c8')
-                hashed_id = str(uuid.uuid3(namespace, usi)).replace("-", "")
-
-                cache_path = os.path.join(args.cache_directory, hashed_id)
-                cache_path = os.path.realpath(cache_path)
-
-                cache_filename = cache_path + "-" + target_filename[-50:].rstrip()
+                cache_filename, cache_path = _determine_caching_paths(usi, args.cache_directory, target_filename)
 
                 output_result_dict["cache_filename"] = os.path.basename(cache_filename)
 
