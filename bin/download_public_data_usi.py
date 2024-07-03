@@ -100,16 +100,19 @@ def _determine_ms_filename(usi):
     return os.path.basename(download_url)
 
 def _determine_caching_paths(usi, cache_directory, target_filename):
-    # TODO: make sure usi is actually only the MRI portions, or else we can get a bunch of repetition
+    # Make sure usi is actually only the MRI portions, or else we can get a bunch of repetition
     stripped_mri = ":".join(usi.split(":")[0:3])
 
     namespace = uuid.UUID('6ba7b810-9dad-11d1-80b4-00c04fd430c8')
     hashed_id = str(uuid.uuid3(namespace, stripped_mri)).replace("-", "")
 
-    cache_path = os.path.join(cache_directory, hashed_id)
+    # embedding with one level of hierarchy
+    hash_folder = hashed_id[:2]
+
+    cache_path = os.path.join(cache_directory, hash_folder)
     cache_path = os.path.realpath(cache_path)
 
-    cache_filename = cache_path + "-" + target_filename[-50:].rstrip()
+    cache_filename = os.path.join(cache_path, hashed_id + "-" + target_filename[-50:].rstrip())
 
     return cache_filename, cache_path
 
@@ -287,44 +290,46 @@ def download_helper(usi, args, extension_filter=None, noconversion=False):
 
                 target_path = os.path.join(target_folder, target_filename)
 
-
             output_result_dict["target_path"] = target_path
 
-            # Checking the cache
-            if args.cache_directory is not None and os.path.exists(args.cache_directory):
-                # TODO: make sure usi is actually only the MRI portions, or else we can get a bunch of repetition
+            if os.path.exists(target_path):
+                output_result_dict["status"] = "EXISTS_IN_OUTPUT"
 
-                cache_filename, cache_path = _determine_caching_paths(usi, args.cache_directory, target_filename)
+            # Checking the cache
+            elif args.cache_directory is not None and os.path.exists(args.cache_directory):
+                print("CACHING")
+
+                cache_filename, cache_directory = _determine_caching_paths(usi, args.cache_directory, target_filename)
 
                 output_result_dict["cache_filename"] = os.path.basename(cache_filename)
 
                 # If we find it in the cache, we can create a link to it
                 if os.path.exists(cache_filename):
-                    print("Found in cache", cache_path)
+                    print("Found in cache", cache_filename)
 
                     if not os.path.exists(target_path):
                         os.symlink(cache_filename, target_path)
                         output_result_dict["status"] = "EXISTS_IN_CACHE"
-                    else:
-                        output_result_dict["status"] = "EXISTS_IN_OUTPUT"
                 else:
                     download_url = _determine_download_url(usi)
 
                     if download_url is None:
                         output_result_dict["status"] = "ERROR"
                     else:
-                        # Saving file to cache if we don't
+                        # Saving file to cache if we don't have it in the cache
                         
                         try:
-                            cache_filename = os.path.join(args.output_folder, cache_filename)
+                            # Making sure the cache directory exists
+                            if not os.path.exists(cache_directory):
+                                os.makedirs(cache_directory, exist_ok=True)
+
                             _download(usi, cache_filename, mri_original_extension)
 
                             # Creating symlink
                             if not os.path.exists(target_path):
                                 os.symlink(cache_filename, target_path)
                                 output_result_dict["status"] = "EXISTS_IN_CACHE"
-                            else:
-                                output_result_dict["status"] = "EXISTS_IN_OUTPUT"
+                                
                         except KeyboardInterrupt:
                             raise
 
@@ -332,6 +337,8 @@ def download_helper(usi, args, extension_filter=None, noconversion=False):
                             # We are likely writing to read only file system for the cache
                             try:
                                 _download(usi, target_path, mri_original_extension)
+
+                                output_result_dict["status"] = "CACHE_ERROR_DOWNLOAD_DIRECT"
                             except KeyboardInterrupt:
                                 raise
                             except:
@@ -372,8 +379,8 @@ def download_helper(usi, args, extension_filter=None, noconversion=False):
 def main():
     parser = argparse.ArgumentParser(description='Running library search parallel')
     parser.add_argument('input_download_file', help='input download file, can be a params json from GNPS2 or a tsv file with a usi header')
-    parser.add_argument('output_folder', help='output_folder')
-    parser.add_argument('output_summary', help='output_summary')
+    parser.add_argument('output_folder', help='Output Folder where the data goes')
+    parser.add_argument('output_summary', help='Output Summary for all the data downloads')
     
     parser.add_argument('--raw_mri_input', action='store_true', default=False, help="Specify if input_download_file is just an MRI by itself")
 
@@ -384,8 +391,8 @@ def main():
     
     parser.add_argument('--extension_filter', default=None, help="Filter to only download certain extensions. Should be formatted as a semicolon separated list")
     
-    
     parser.add_argument('--noconversion', action='store_true', default=False, help="Specifying to turn off conversion and download the full raw file")
+
     args = parser.parse_args()
 
     # checking the input file exists
@@ -397,7 +404,7 @@ def main():
         os.makedirs(args.output_folder, exist_ok=True)
 
     # Checking the file extension
-    if args.raw_usi_input:
+    if args.raw_mri_input:
         usi_list = [args.input_download_file.strip()]
     else:
         if args.input_download_file.endswith(".yaml"):

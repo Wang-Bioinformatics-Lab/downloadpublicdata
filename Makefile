@@ -10,6 +10,9 @@ test_mzml_nest:
 test_mzml_cache:
 	python ./bin/download_public_data_usi.py ./data/test_download.tsv ./data/filedownloads/ ./data/summary.tsv --cache_directory ./data/cache
 
+test_mzml_cache_small:
+	python ./bin/download_public_data_usi.py ./data/test_download_small.tsv ./data/filedownloads/ ./data/summary.tsv --cache_directory ./data/cache
+
 test_raw_small:
 	python ./bin/download_public_data_usi.py ./data/test_download_raw_small.tsv ./data/filedownloads/test_raw_small ./data/summary.tsv
 
@@ -35,3 +38,8 @@ test_invalid:
 test:
 	python ./bin/download_public_data_usi.py ./data/test_download.tsv ./data/ ./data/summary.tsv
 	
+
+clean:
+	rm data/cache/* -r | true
+	rm data/filedownloads/* -r | true
+	rm data/summary.tsv | true
