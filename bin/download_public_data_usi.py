@@ -1,23 +1,20 @@
 #!/usr/bin/python
 import sys
 import os
-import json
 import argparse
 from collections import defaultdict
-import csv
 import pandas as pd
-import glob
 import shutil
 import requests
 import yaml
 import uuid
 from tqdm import tqdm
-import warnings
 import time
+
+import download_raw
 from sanitize_filename import sanitize
 
 DATASET_CACHE_URL_BASE = "https://datasetcache.gnps2.org"
-#DATASET_CACHE_URL_BASE = "http://169.235.26.140:5234"
 
 def _determine_download_url(usi):
     # Getting the path to the original file
@@ -33,17 +30,17 @@ def _determine_download_url(usi):
 
     return None
 
-def _determine_foldername(usi):
+def _determine_dataset_reconstructed_foldername(usi):
     """
     We are going to get the folder name that contains the datasetid together with the original folder structure in the usi
     """ 
     usi_splits = usi.split(":")
-    datasetid = usi_splits[1]
+    dataset_id = usi_splits[1]
     fileportion = usi_splits[2]
     folder_name = os.path.dirname(fileportion)
-    dataid_folder = os.path.join(datasetid, folder_name)
-    return dataid_folder
+    data_folder = os.path.join(dataset_id, folder_name)
 
+    return data_folder
 
 def _determine_ms_filename(usi):
     """
@@ -101,6 +98,23 @@ def _determine_ms_filename(usi):
     # TODO: Work for Metabolights
 
     return os.path.basename(download_url)
+
+def _determine_caching_paths(usi, cache_directory, target_filename):
+    # Make sure usi is actually only the MRI portions, or else we can get a bunch of repetition
+    stripped_mri = ":".join(usi.split(":")[0:3])
+
+    namespace = uuid.UUID('6ba7b810-9dad-11d1-80b4-00c04fd430c8')
+    hashed_id = str(uuid.uuid3(namespace, stripped_mri)).replace("-", "")
+
+    # embedding with one level of hierarchy
+    hash_folder = hashed_id[:2]
+
+    cache_path = os.path.join(cache_directory, hash_folder)
+    cache_path = os.path.realpath(cache_path)
+
+    cache_filename = os.path.join(cache_path, hashed_id + "-" + target_filename[-50:].rstrip())
+
+    return cache_filename, cache_path
 
 def _download(mri, target_filename, datafile_extension):
 
@@ -264,7 +278,7 @@ def download_helper(usi, args, extension_filter=None, noconversion=False):
                 
                 # recreate the folder structure
                 # add data source folder to output_folder
-                dataset_folder =  _determine_foldername(usi)
+                dataset_folder = _determine_dataset_reconstructed_foldername(usi)
                 target_dir = os.path.join(target_folder, dataset_folder)
                 if not os.path.exists(target_dir):
                     os.makedirs(target_dir)
@@ -276,50 +290,67 @@ def download_helper(usi, args, extension_filter=None, noconversion=False):
 
                 target_path = os.path.join(target_folder, target_filename)
 
-
             output_result_dict["target_path"] = target_path
+
+            if os.path.exists(target_path):
+                output_result_dict["status"] = "EXISTS_IN_OUTPUT"
+
+            # Checking if the file is already in the dataset directory
+            if args.existing_dataset_directory is not None:
+                # Checking
+                print("Checking existing dataset directory")
+                path_in_dataset_folder = _determine_dataset_reconstructed_foldername(usi)
+                collection_name = _determine_target_subfolder(usi)
+
+                dataset_filepath = os.path.join(args.existing_dataset_directory, collection_name, path_in_dataset_folder, target_filename)
+
+                # Checking if this exists
+                if os.path.exists(dataset_filepath):
+                    print(dataset_filepath, "exists")
+
+                    # Let's make a symlink
+                    if not os.path.exists(target_path):
+                        os.symlink(dataset_filepath, target_path)
+
+                    output_result_dict["status"] = "EXISTS_IN_DATASET"
+
+                    return output_result_dict
 
             # Checking the cache
             if args.cache_directory is not None and os.path.exists(args.cache_directory):
+                print("Checking in the cache now")
 
-                namespace = uuid.UUID('6ba7b810-9dad-11d1-80b4-00c04fd430c8')
-                hashed_id = str(uuid.uuid3(namespace, usi)).replace("-", "")
-
-                cache_path = os.path.join(args.cache_directory, hashed_id)
-                cache_path = os.path.realpath(cache_path)
-
-                cache_filename = cache_path + "-" + target_filename[-50:].rstrip()
+                cache_filename, cache_directory = _determine_caching_paths(usi, args.cache_directory, target_filename)
 
                 output_result_dict["cache_filename"] = os.path.basename(cache_filename)
 
                 # If we find it in the cache, we can create a link to it
                 if os.path.exists(cache_filename):
-                    print("Found in cache", cache_path)
+                    print("Found in cache", cache_filename)
 
                     if not os.path.exists(target_path):
                         os.symlink(cache_filename, target_path)
                         output_result_dict["status"] = "EXISTS_IN_CACHE"
-                    else:
-                        output_result_dict["status"] = "EXISTS_IN_OUTPUT"
                 else:
                     download_url = _determine_download_url(usi)
 
                     if download_url is None:
                         output_result_dict["status"] = "ERROR"
                     else:
-                        # Saving file to cache if we don't
+                        # Saving file to cache if we don't have it in the cache
                         
                         try:
-                            cache_filename = os.path.join(args.output_folder, cache_filename)
+                            # Making sure the cache directory exists
+                            if not os.path.exists(cache_directory):
+                                os.makedirs(cache_directory, exist_ok=True)
+
                             _download(usi, cache_filename, mri_original_extension)
-                            
 
                             # Creating symlink
                             if not os.path.exists(target_path):
                                 os.symlink(cache_filename, target_path)
-                                output_result_dict["status"] = "EXISTS_IN_CACHE"
-                            else:
-                                output_result_dict["status"] = "EXISTS_IN_OUTPUT"
+                                output_result_dict["status"] = "DOWNLOADED_INTO_OUTPUT_WITH_CACHE"
+
                         except KeyboardInterrupt:
                             raise
 
@@ -327,11 +358,13 @@ def download_helper(usi, args, extension_filter=None, noconversion=False):
                             # We are likely writing to read only file system for the cache
                             try:
                                 _download(usi, target_path, mri_original_extension)
+
+                                output_result_dict["status"] = "CACHE_ERROR_DOWNLOAD_DIRECT"
                             except KeyboardInterrupt:
                                 raise
                             except:
                                 output_result_dict["status"] = "DOWNLOAD_ERROR"
-                            
+
             else:
                 # if the target path file is already there, then we don't need to do anything
                 if os.path.exists(target_path):
@@ -339,7 +372,7 @@ def download_helper(usi, args, extension_filter=None, noconversion=False):
                 else:
                     if processdownloadraw:
                         print("Downloading the raw data without conversion", target_path)
-                        import download_raw
+                        
                         download_raw.download_raw_mri(usi, target_path)
 
                         return
@@ -367,14 +400,22 @@ def download_helper(usi, args, extension_filter=None, noconversion=False):
 def main():
     parser = argparse.ArgumentParser(description='Running library search parallel')
     parser.add_argument('input_download_file', help='input download file, can be a params json from GNPS2 or a tsv file with a usi header')
-    parser.add_argument('output_folder', help='output_folder')
-    parser.add_argument('output_summary', help='output_summary')
-    parser.add_argument('--cache_directory', default=None, help='folder of existing data')
+    parser.add_argument('output_folder', help='Output Folder where the data goes')
+    parser.add_argument('output_summary', help='Output Summary for all the data downloads')
+    
+    parser.add_argument('--raw_mri_input', action='store_true', default=False, help="Specify if input_download_file is just an MRI by itself")
+
+    parser.add_argument('--cache_directory', default=None, help='cache folder of existing data')
+
+    parser.add_argument('--existing_dataset_directory', default=None, help='Directory with a proper dataset structure to avoid downloading the same dataset multiple times')
+
     parser.add_argument('--nestfiles', help='Nest mass spec files in a hashed folder so its not all in the same directory', default='flat')
     parser.add_argument('--progress', help='Show progress bar', action='store_true', default=False)
+    
     parser.add_argument('--extension_filter', default=None, help="Filter to only download certain extensions. Should be formatted as a semicolon separated list")
-    parser.add_argument('--raw_usi_input', action='store_true', default=False, help="Specify if input_download_file is a raw USI file")
+    
     parser.add_argument('--noconversion', action='store_true', default=False, help="Specifying to turn off conversion and download the full raw file")
+
     args = parser.parse_args()
 
     # checking the input file exists
@@ -386,7 +427,7 @@ def main():
         os.makedirs(args.output_folder, exist_ok=True)
 
     # Checking the file extension
-    if args.raw_usi_input:
+    if args.raw_mri_input:
         usi_list = [args.input_download_file.strip()]
     else:
         if args.input_download_file.endswith(".yaml"):
