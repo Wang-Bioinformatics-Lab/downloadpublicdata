@@ -32,7 +32,7 @@ def _determine_download_url(usi):
 
     return None
 
-def _determine_foldername(usi):
+def _determine_dataset_reconstructed_foldername(usi):
     """
     We are going to get the folder name that contains the datasetid together with the original folder structure in the usi
     """ 
@@ -43,7 +43,6 @@ def _determine_foldername(usi):
     data_folder = os.path.join(dataset_id, folder_name)
 
     return data_folder
-
 
 def _determine_ms_filename(usi):
     """
@@ -101,6 +100,20 @@ def _determine_ms_filename(usi):
     # TODO: Work for Metabolights
 
     return os.path.basename(download_url)
+
+def _determine_caching_paths(usi, cache_directory, target_filename):
+    # TODO: make sure usi is actually only the MRI portions, or else we can get a bunch of repetition
+    stripped_mri = ":".join(usi.split(":")[0:3])
+
+    namespace = uuid.UUID('6ba7b810-9dad-11d1-80b4-00c04fd430c8')
+    hashed_id = str(uuid.uuid3(namespace, stripped_mri)).replace("-", "")
+
+    cache_path = os.path.join(cache_directory, hashed_id)
+    cache_path = os.path.realpath(cache_path)
+
+    cache_filename = cache_path + "-" + target_filename[-50:].rstrip()
+
+    return cache_filename
 
 def _download(mri, target_filename, datafile_extension):
 
@@ -264,7 +277,7 @@ def download_helper(usi, args, extension_filter=None, noconversion=False):
                 
                 # recreate the folder structure
                 # add data source folder to output_folder
-                dataset_folder =  _determine_foldername(usi)
+                dataset_folder = _determine_dataset_reconstructed_foldername(usi)
                 target_dir = os.path.join(target_folder, dataset_folder)
                 if not os.path.exists(target_dir):
                     os.makedirs(target_dir)
