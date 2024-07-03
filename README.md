@@ -2,18 +2,18 @@ This tool is meant to make it easy to download mass spectrometry files from publ
 
 ## Setup
 
-```
+```sh
 pip install -r requirements.txt
 ```
 
 ## Running
 
-```
+```sh
 python ./bin/download_public_data_usi.py ./data/test_download.tsv ./data/ ./data/summary.tsv
 ```
 
 or to short cut this
-```
+```sh
 make test
 ```
 

@@ -37,11 +37,12 @@ def _determine_foldername(usi):
     We are going to get the folder name that contains the datasetid together with the original folder structure in the usi
     """ 
     usi_splits = usi.split(":")
-    datasetid = usi_splits[1]
+    dataset_id = usi_splits[1]
     fileportion = usi_splits[2]
     folder_name = os.path.dirname(fileportion)
-    dataid_folder = os.path.join(datasetid, folder_name)
-    return dataid_folder
+    data_folder = os.path.join(dataset_id, folder_name)
+
+    return data_folder
 
 
 def _determine_ms_filename(usi):
@@ -280,6 +281,7 @@ def download_helper(usi, args, extension_filter=None, noconversion=False):
 
             # Checking the cache
             if args.cache_directory is not None and os.path.exists(args.cache_directory):
+                # TODO: make sure usi is actually only the MRI portions, or else we can get a bunch of repetition
 
                 namespace = uuid.UUID('6ba7b810-9dad-11d1-80b4-00c04fd430c8')
                 hashed_id = str(uuid.uuid3(namespace, usi)).replace("-", "")
@@ -311,7 +313,6 @@ def download_helper(usi, args, extension_filter=None, noconversion=False):
                         try:
                             cache_filename = os.path.join(args.output_folder, cache_filename)
                             _download(usi, cache_filename, mri_original_extension)
-                            
 
                             # Creating symlink
                             if not os.path.exists(target_path):
@@ -368,11 +369,17 @@ def main():
     parser.add_argument('input_download_file', help='input download file, can be a params json from GNPS2 or a tsv file with a usi header')
     parser.add_argument('output_folder', help='output_folder')
     parser.add_argument('output_summary', help='output_summary')
-    parser.add_argument('--cache_directory', default=None, help='folder of existing data')
+    
+    parser.add_argument('--raw_mri_input', action='store_true', default=False, help="Specify if input_download_file is just an MRI by itself")
+
+    parser.add_argument('--cache_directory', default=None, help='cache folder of existing data')
+
     parser.add_argument('--nestfiles', help='Nest mass spec files in a hashed folder so its not all in the same directory', default='flat')
     parser.add_argument('--progress', help='Show progress bar', action='store_true', default=False)
+    
     parser.add_argument('--extension_filter', default=None, help="Filter to only download certain extensions. Should be formatted as a semicolon separated list")
-    parser.add_argument('--raw_usi_input', action='store_true', default=False, help="Specify if input_download_file is a raw USI file")
+    
+    
     parser.add_argument('--noconversion', action='store_true', default=False, help="Specifying to turn off conversion and download the full raw file")
     args = parser.parse_args()
 
