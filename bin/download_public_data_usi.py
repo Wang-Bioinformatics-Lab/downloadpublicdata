@@ -300,16 +300,25 @@ def download_helper(usi, args, extension_filter=None, noconversion=False):
                 # Checking
                 print("Checking existing dataset directory")
                 path_in_dataset_folder = _determine_dataset_reconstructed_foldername(usi)
+                collection_name = _determine_target_subfolder(usi)
 
-                dataset_filepath = os.path.join(args.existing_dataset_directory, path_in_dataset_folder, target_filename)
+                dataset_filepath = os.path.join(args.existing_dataset_directory, collection_name, path_in_dataset_folder, target_filename)
 
                 # Checking if this exists
                 if os.path.exists(dataset_filepath):
                     print(dataset_filepath, "exists")
 
+                    # Let's make a symlink
+                    if not os.path.exists(target_path):
+                        os.symlink(dataset_filepath, target_path)
+
+                    output_result_dict["status"] = "EXISTS_IN_DATASET"
+
+                    return output_result_dict
+
             # Checking the cache
-            elif args.cache_directory is not None and os.path.exists(args.cache_directory):
-                print("CACHING")
+            if args.cache_directory is not None and os.path.exists(args.cache_directory):
+                print("Checking in the cache now")
 
                 cache_filename, cache_directory = _determine_caching_paths(usi, args.cache_directory, target_filename)
 
@@ -340,7 +349,7 @@ def download_helper(usi, args, extension_filter=None, noconversion=False):
                             # Creating symlink
                             if not os.path.exists(target_path):
                                 os.symlink(cache_filename, target_path)
-                                output_result_dict["status"] = "EXISTS_IN_CACHE"
+                                output_result_dict["status"] = "DOWNLOADED_INTO_OUTPUT_WITH_CACHE"
 
                         except KeyboardInterrupt:
                             raise
