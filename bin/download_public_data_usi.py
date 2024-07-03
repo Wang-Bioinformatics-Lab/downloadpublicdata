@@ -295,6 +295,11 @@ def download_helper(usi, args, extension_filter=None, noconversion=False):
             if os.path.exists(target_path):
                 output_result_dict["status"] = "EXISTS_IN_OUTPUT"
 
+            # Checking if the file is already in the dataset directory
+            if args.existing_dataset_directory is not None:
+                # Checking
+                print("Checking existing dataset directory")
+
             # Checking the cache
             elif args.cache_directory is not None and os.path.exists(args.cache_directory):
                 print("CACHING")
@@ -385,6 +390,8 @@ def main():
     parser.add_argument('--raw_mri_input', action='store_true', default=False, help="Specify if input_download_file is just an MRI by itself")
 
     parser.add_argument('--cache_directory', default=None, help='cache folder of existing data')
+
+    parser.add_argument('--existing_dataset_directory', default=None, help='Directory with a proper dataset structure to avoid downloading the same dataset multiple times')
 
     parser.add_argument('--nestfiles', help='Nest mass spec files in a hashed folder so its not all in the same directory', default='flat')
     parser.add_argument('--progress', help='Show progress bar', action='store_true', default=False)

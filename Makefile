@@ -13,6 +13,13 @@ test_mzml_cache:
 test_mzml_cache_small:
 	python ./bin/download_public_data_usi.py ./data/test_download_small.tsv ./data/filedownloads/ ./data/summary.tsv --cache_directory ./data/cache
 
+test_mzml_dataset_cache_small:
+	python ./bin/download_public_data_usi.py ./data/test_download_small.tsv \
+	./data/filedownloads/ ./data/summary.tsv \
+	--cache_directory ./data/cache \
+	--existing_dataset_directory /data/datasets/server
+
+
 test_raw_small:
 	python ./bin/download_public_data_usi.py ./data/test_download_raw_small.tsv ./data/filedownloads/test_raw_small ./data/summary.tsv
 
