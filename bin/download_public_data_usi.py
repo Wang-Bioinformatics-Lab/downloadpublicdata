@@ -329,7 +329,7 @@ def download_helper(usi, args, extension_filter=None, noconversion=False):
                             if not os.path.exists(target_path):
                                 os.symlink(cache_filename, target_path)
                                 output_result_dict["status"] = "EXISTS_IN_CACHE"
-                                
+
                         except KeyboardInterrupt:
                             raise
 
@@ -343,7 +343,7 @@ def download_helper(usi, args, extension_filter=None, noconversion=False):
                                 raise
                             except:
                                 output_result_dict["status"] = "DOWNLOAD_ERROR"
-                            
+
             else:
                 # if the target path file is already there, then we don't need to do anything
                 if os.path.exists(target_path):
