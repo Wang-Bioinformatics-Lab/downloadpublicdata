@@ -207,7 +207,9 @@ def _download_vendor(mri, target_filename):
 
     return "CONVERTED"
 
-def download_helper(usi, args, extension_filter=None):
+def download_helper(usi, args, extension_filter=None, noconversion=False):
+    processdownloadraw = False
+
     try:
         if len(usi) < 5:
             return None
@@ -232,7 +234,11 @@ def download_helper(usi, args, extension_filter=None):
             mri_original_extension = file_extension
 
             if mri_original_extension.lower() in [".d", ".wiff", ".raw"]:
-                target_filename = filename_without_extension + ".mzML"
+                if noconversion:
+                    target_filename = ms_filename
+                    processdownloadraw = True
+                else:
+                    target_filename = filename_without_extension + ".mzML"
             else:
                 target_filename = ms_filename 
         except:
@@ -273,7 +279,6 @@ def download_helper(usi, args, extension_filter=None):
 
             output_result_dict["target_path"] = target_path
 
-            
             # Checking the cache
             if args.cache_directory is not None and os.path.exists(args.cache_directory):
 
@@ -331,8 +336,14 @@ def download_helper(usi, args, extension_filter=None):
                 # if the target path file is already there, then we don't need to do anything
                 if os.path.exists(target_path):
                     output_result_dict["status"] = "EXISTS_IN_OUTPUT"
-                
                 else:
+                    if processdownloadraw:
+                        print("Downloading the raw data without conversion", target_path)
+                        import download_raw
+                        download_raw.download_raw_mri(usi, target_path)
+
+                        return
+
                     download_url = _determine_download_url(usi)
 
                     if download_url is None:
@@ -350,7 +361,6 @@ def download_helper(usi, args, extension_filter=None):
     except Exception as e:
         print("Error", e, file=sys.stderr)
         output_result_dict["status"] = "ERROR"
-    
     finally:    
         return output_result_dict
 
@@ -361,14 +371,11 @@ def main():
     parser.add_argument('output_summary', help='output_summary')
     parser.add_argument('--cache_directory', default=None, help='folder of existing data')
     parser.add_argument('--nestfiles', help='Nest mass spec files in a hashed folder so its not all in the same directory', default='flat')
-    parser.add_argument('--threads', default=1, type=int, help="Number of threads")
     parser.add_argument('--progress', help='Show progress bar', action='store_true', default=False)
     parser.add_argument('--extension_filter', default=None, help="Filter to only download certain extensions. Should be formatted as a semicolon separated list")
     parser.add_argument('--raw_usi_input', action='store_true', default=False, help="Specify if input_download_file is a raw USI file")
+    parser.add_argument('--noconversion', action='store_true', default=False, help="Specifying to turn off conversion and download the full raw file")
     args = parser.parse_args()
-
-    if args.threads != 1:
-        warnings.warn("The 'threads' argument is deprecated and will be removed in a future version. Only single-threading is supported.", DeprecationWarning)
 
     # checking the input file exists
     if not os.path.isfile(args.input_download_file):
@@ -416,7 +423,7 @@ def main():
         if len(usi) < 5:
             continue
 
-        result = download_helper(usi, args, extension_filter)
+        result = download_helper(usi, args, extension_filter, noconversion=args.noconversion)
         if result is not None:
             output_result_list.append(result)
     
