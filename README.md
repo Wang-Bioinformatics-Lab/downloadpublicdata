@@ -18,7 +18,9 @@ make test
 ```
 
 
-### Example 1: Basic Usage
+### Usage Examples
+
+#### Example 1: Basic Usage
 
 **Command:**
 
@@ -32,11 +34,11 @@ This command downloads the public data specified in the `test_download.tsv` file
 
 **Arguments:**
 
-- `./data/test_download.tsv`: The input download file. It can be a parameters JSON from GNPS2 or a TSV file with a USI header.
+- `./data/test_download.tsv`: The input download file. This can be a parameters JSON from GNPS2 or a TSV file with a USI header.
 - `./data/filedownloads/filedownloads_flat/`: The output folder where the downloaded files will be stored.
 - `./data/summary.tsv`: The output summary file that will contain the summary of the downloads.
 
-### Example 2: Using `--nestfiles` to Recreate Directory Structure
+#### Example 2: Recreate Directory Structure
 
 **Command:**
 
@@ -55,7 +57,7 @@ This command downloads the public data specified in the `test_download.tsv` file
 - `./data/summary.tsv`: The output summary file.
 - `--nestfiles 'recreate'`: Specifies that the downloaded files should be stored in a directory structure that recreates the original structure.
 
-### Example 3: Nesting Files in Hashed Folders
+#### Example 3: Nesting Files in Hashed Folders
 
 **Command:**
 
@@ -74,39 +76,7 @@ This command downloads the public data specified in the `test_download.tsv` file
 - `./data/summary.tsv`: The output summary file.
 - `--nestfiles 'nest'`: Specifies that the downloaded files should be nested in hashed folders.
 
-### Additional Options
-
-**`--cache_directory`**
-
-- **Usage:** `--cache_directory /path/to/cache`
-- **Description:** Specifies a folder containing existing data to use as a cache. This can speed up the download process if some of the data is already available.
-
-**`--progress`**
-
-- **Usage:** `--progress`
-- **Description:** Show a progress bar during the download process. Useful for monitoring the progress of large downloads.
-
-**`--extension_filter`**
-
-- **Usage:** `--extension_filter '.mzML;.mgf'`
-- **Description:** Filter the downloaded files to only include those with the specified extensions. Should be formatted as a semicolon-separated list.
-
-**`--raw_usi_input`**
-
-- **Usage:** `--raw_usi_input`
-- **Description:** Specify if the `input_download_file` is a raw USI file.
-
-**`--noconversion`**
-
-- **Usage:** `--noconversion`
-- **Description:** Turn off file conversion and download the full raw file. 
-
-These examples should help users understand how to use the different options available with the command-line tool.
-
-
-Sure, here are the documentation examples for the additional command lines you provided:
-
-### Example 4: Using Cache Directory
+#### Example 4: Using Cache Directory
 
 **Command:**
 
@@ -125,12 +95,12 @@ This command downloads the public data specified in the `test_download.tsv` file
 - `./data/summary.tsv`: The output summary file.
 - `--cache_directory ./data/cache`: Specifies a folder containing existing data to use as a cache.
 
-### Example 5: Basic Usage with Raw USI Input
+#### Example 5: Basic Usage with Raw USI Input
 
 **Command:**
 
 ```sh
-python ./bin/download_public_data_usi.py ./data/test_download_raw.tsv ./data/filedownloads/test_raw ./data/summary.tsv
+python ./bin/download_public_data_usi.py ./data/test_download_raw.tsv ./data/filedownloads/test_raw ./data/summary.tsv --raw_usi_input
 ```
 
 **Description:**
@@ -142,17 +112,14 @@ This command downloads the public data specified in the `test_download_raw.tsv` 
 - `./data/test_download_raw.tsv`: The input download file.
 - `./data/filedownloads/test_raw`: The output folder where the downloaded files will be stored.
 - `./data/summary.tsv`: The output summary file.
+- `--raw_usi_input`: Specifies that the `input_download_file` is a raw USI file.
 
-### Example 6: Disabling Conversion
+#### Example 6: Disabling Conversion
 
 **Command:**
 
 ```sh
-python ./bin/download_public_data_usi.py \
-    ./data/test_download_raw_trouble.tsv \
-    ./data/filedownloads/test_raw_trouble \
-    ./data/summary.tsv \
-    --noconversion
+python ./bin/download_public_data_usi.py ./data/test_download_raw_trouble.tsv ./data/filedownloads/test_raw_trouble ./data/summary.tsv --noconversion
 ```
 
 **Description:**
@@ -166,7 +133,7 @@ This command downloads the public data specified in the `test_download_raw_troub
 - `./data/summary.tsv`: The output summary file.
 - `--noconversion`: Turn off file conversion and download the full raw file.
 
-### Additional Options Recap
+### Additional Options
 
 - **`--cache_directory`**
 
@@ -193,4 +160,6 @@ This command downloads the public data specified in the `test_download_raw_troub
   - **Usage:** `--noconversion`
   - **Description:** Turn off file conversion and download the full raw file.
 
-These examples should help users understand how to use the different options available with the command-line tool for various scenarios.
+---
+
+These examples and explanations should help users understand how to use the different options available with the command-line tool for various scenarios.
