@@ -76,6 +76,15 @@ This command downloads the public data specified in the `test_download.tsv` file
 - `./data/summary.tsv`: The output summary file.
 - `--nestfiles 'nest'`: Specifies that the downloaded files should be nested in hashed folders.
 
+**Explanation of Hashed Folders:**
+
+When you have a large number of files (e.g., 10,000), placing all of them in a single directory can be inefficient. Some file systems have limits on the number of files per folder, and operations like `ls` can become very slow. Using hashed folders mitigates this by creating a directory tree, where files are distributed across multiple folders. For example:
+
+- `data/aa/file.mzML`
+- `data/ab/file2.mzML`
+
+This creates 256 folders at the first level, significantly reducing the number of files per folder and improving file system performance.
+
 #### Example 4: Using Cache Directory
 
 **Command:**
