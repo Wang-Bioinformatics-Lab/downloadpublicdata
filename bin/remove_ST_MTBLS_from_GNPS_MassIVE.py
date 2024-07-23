@@ -30,7 +30,39 @@ def filter_and_write_usi(gnps_filename, mtbls_filename, mwb_filename):
             # Write usi value to the output file
             writer.writerow([usi_value])
 
+    with open(mtbls_filename, 'r', newline='') as csvfile, open(output_gnps_filename, 'a') as output_file:
+        reader = csv.DictReader(csvfile)
+        writer = csv.writer(output_file)
+
+        # Write header to the output file
+        # writer.writerow(['usi'])
+
+        for row in reader:
+            usi_value = row.get('usi', '').strip()
+            
+            # Ignore entries containing "MTBLS718" or "MTBLS719"
+            if "MTBLS718" in usi_value or "MTBLS719" in usi_value:
+                continue
+
+            # Write usi value to the output file
+            writer.writerow([usi_value])
+    
+    with open(mwb_filename, 'r', newline='') as csvfile, open(output_gnps_filename, 'a') as output_file:
+        reader = csv.DictReader(csvfile)
+        writer = csv.writer(output_file)
+
+        # Write header to the output file
+        # writer.writerow(['usi'])
+
+        for row in reader:
+            usi_value = row.get('usi', '').strip()
+            
+            # Write usi value to the output file
+            writer.writerow([usi_value])
+
+
     print(f"Filtered data has been written to {output_gnps_filename}")
+
 
 if __name__ == "__main__":
     if len(sys.argv) != 4:
