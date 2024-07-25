@@ -218,7 +218,8 @@ def _download_vendor(mri, target_filename):
         print("CONVERSION not ready")
         return "CONVERSION NOT READY"
 
-    return "CONVERTED"
+    # change return value to 0 from original "CONVERTED"
+    return 0
 
 def download_helper(usi, args, extension_filter=None, noconversion=False):
     processdownloadraw = False
