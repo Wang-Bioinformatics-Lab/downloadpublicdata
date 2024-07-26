@@ -5,6 +5,7 @@ import os
 
 # combines all the mris/usis in gnps, mtbls and mwb datasets, ignore the gnps data imported from mtbls and mwb/ST
 # Currently also ignore the MTBLS718 and MTBLS719 datasets that are slow to download with http approach. 
+# Also ignore the USIs/MRIs that contains ":__MACOSX/" 
 def filter_and_write_usi(gnps_filename, mtbls_filename, mwb_filename):
     # Get the original file name without extension as the prefix
     file_prefix = os.path.splitext(os.path.basename(gnps_filename))[0]
@@ -28,6 +29,11 @@ def filter_and_write_usi(gnps_filename, mtbls_filename, mwb_filename):
             # Ignore entries containing "/ST" or "/MTBLS", these are gnps dataset imported from mtbls and mwb
             if "/ST" in usi_value or "/MTBLS" in usi_value:
                 continue
+            
+            # Ignore USI/MRI that contains ":__MACOSX/". 
+            # These files are the result of Apple storing Resource Forks safe manner
+            if ":__MACOSX/" in usi_value:
+                continue
 
             # Write usi value to the output file
             writer.writerow([usi_value])
@@ -40,6 +46,10 @@ def filter_and_write_usi(gnps_filename, mtbls_filename, mwb_filename):
         for row in reader:
             usi_value = row.get('usi', '').strip()
             
+            # Ignore USI/MRI that contains ":__MACOSX/". 
+            if ":__MACOSX/" in usi_value:
+                continue
+
             # Ignore entries containing "MTBLS718" or "MTBLS719"
             if "MTBLS718" in usi_value or "MTBLS719" in usi_value:
                 continue
@@ -54,6 +64,10 @@ def filter_and_write_usi(gnps_filename, mtbls_filename, mwb_filename):
         for row in reader:
             usi_value = row.get('usi', '').strip()
             
+            # Ignore USI/MRI that contains ":__MACOSX/". 
+            if ":__MACOSX/" in usi_value:
+                continue
+
             # Write usi value to the output file
             writer.writerow([usi_value])
 
@@ -63,7 +77,7 @@ def filter_and_write_usi(gnps_filename, mtbls_filename, mwb_filename):
 
 if __name__ == "__main__":
     if len(sys.argv) != 4:
-        print("Usage: python script.py <gnps_filename>")
+        print("Usage: python combine_gnps_mtbls_mwb.py <gnps_filename> <mtbls_file> <mwb_filename>")
     else:
         gnps_filename = sys.argv[1]
         mtbls_filename = sys.argv[2]
