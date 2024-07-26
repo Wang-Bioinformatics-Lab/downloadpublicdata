@@ -216,7 +216,8 @@ def _download_vendor(mri, target_filename):
                 fd.write(chunk)
     else:
         print("CONVERSION not ready")
-        return "CONVERSION NOT READY"
+        # change the return value from "CONVERSION NOT READY" to 98
+        return 98
 
     # change return value to 0 from original "CONVERTED"
     return 0
