@@ -4,6 +4,9 @@ test_mzml:
 test_mzml_recreate:
 	python ./bin/download_public_data_usi.py ./data/test_download.tsv ./data/filedownloads/filedownloads_recreate/ ./data/summary.tsv --nestfiles 'recreate'
 
+test_too_small_files:
+	python ./bin/download_public_data_usi.py ./data/test_fail_too_small.tsv ./data/filedownloads/filedownloads_recreate/test_fail_too_small/ ./data/summary_test_fail_too_small.tsv --nestfiles 'recreate'
+
 test_mzml_nest:
 	python ./bin/download_public_data_usi.py ./data/test_download.tsv ./data/filedownloads/filedownloads_nest/ ./data/summary.tsv --nestfiles 'nest'
 
@@ -24,7 +27,7 @@ test_raw_small:
 	python ./bin/download_public_data_usi.py ./data/test_download_raw_small.tsv ./data/filedownloads/test_raw_small ./data/summary.tsv
 
 test_raw:
-	python ./bin/download_public_data_usi.py ./data/test_download_raw.tsv ./data/filedownloads/test_raw ./data/summary.tsv
+	python ./bin/download_public_data_usi.py ./data/test_download_raw.tsv ./data/filedownloads/test_raw ./data/summary_test_raw.tsv
 
 test_raw_trouble:
 	python ./bin/download_public_data_usi.py \

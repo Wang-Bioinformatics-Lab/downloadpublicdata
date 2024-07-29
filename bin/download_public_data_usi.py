@@ -147,12 +147,11 @@ def _download(mri, target_filename, datafile_extension):
     file_size = os.path.getsize(temp_mangled_filename)
     if(file_size < 10000):
         print(f"{mri} downloading failed, remove temporary file {temp_mangled_filename}")
-        
+        return_value = 99
         os.remove(temp_mangled_filename)
     else:
         print(f"{mri} downloaded successfully to target location at {target_filename}")
         shutil.move(temp_mangled_filename, target_filename)
-    
     return return_value
 
 def _download_mzml(usi, target_filename):
@@ -217,9 +216,11 @@ def _download_vendor(mri, target_filename):
                 fd.write(chunk)
     else:
         print("CONVERSION not ready")
-        return "CONVERSION NOT READY"
+        # change the return value from "CONVERSION NOT READY" to 98
+        return 98
 
-    return "CONVERTED"
+    # change return value to 0 from original "CONVERTED"
+    return 0
 
 def download_helper(usi, args, extension_filter=None, noconversion=False):
     processdownloadraw = False
@@ -383,9 +384,18 @@ def download_helper(usi, args, extension_filter=None, noconversion=False):
                         output_result_dict["status"] = "ERROR"
                     else:
                         # download in chunks using requests
-                        _download(usi, target_path, mri_original_extension)
+                        return_value = _download(usi, target_path, mri_original_extension)
+                        if return_value == 0:
+                            output_result_dict["status"] = "DOWNLOADED_INTO_OUTPUT_WITHOUT_CACHE"
+                        elif return_value == 99:
+                            # downloaded data file is too small
+                            print(f"File size might be too small")
+                            output_result_dict["status"] = "ERROR_DATA_TOO_SMALL"
+                        elif return_value == 98:
+                            # data file conversion is incorrect
+                            print(f"Vendor conversion not ready")
+                            output_result_dict["status"] = "ERROR_CONVERSION_NOT_READY"
 
-                        output_result_dict["status"] = "DOWNLOADED_INTO_OUTPUT_WITHOUT_CACHE"
 
         else:
             output_result_dict["status"] = "ERROR"
