@@ -147,7 +147,7 @@ def _download(mri, target_filename, datafile_extension):
     file_size = os.path.getsize(temp_mangled_filename)
     if(file_size < 10000):
         print(f"{mri} downloading failed, remove temporary file {temp_mangled_filename}")
-        return_value = 99 
+        return_value = 99
         os.remove(temp_mangled_filename)
     else:
         print(f"{mri} downloaded successfully to target location at {target_filename}")
@@ -387,9 +387,14 @@ def download_helper(usi, args, extension_filter=None, noconversion=False):
                         return_value = _download(usi, target_path, mri_original_extension)
                         if return_value == 0:
                             output_result_dict["status"] = "DOWNLOADED_INTO_OUTPUT_WITHOUT_CACHE"
-                        else:
-                            print(f"return_value {return_value} is not 0, file size might be too small")
-                            output_result_dict["status"] = "ERROR"
+                        elif return_value == 99:
+                            # downloaded data file is too small
+                            print(f"File size might be too small")
+                            output_result_dict["status"] = "ERROR_DATA_TOO_SMALL"
+                        elif return_value == 98:
+                            # data file conversion is incorrect
+                            print(f"Vendor conversion not ready")
+                            output_result_dict["status"] = "ERROR_CONVERSION_NOT_READY"
 
 
         else:

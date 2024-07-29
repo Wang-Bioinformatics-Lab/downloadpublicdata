@@ -5,7 +5,7 @@ test_mzml_recreate:
 	python ./bin/download_public_data_usi.py ./data/test_download.tsv ./data/filedownloads/filedownloads_recreate/ ./data/summary.tsv --nestfiles 'recreate'
 
 test_too_small_files:
-	python ./bin/download_public_data_usi.py ./data/test_download_failed_avoid.tsv ./data/filedownloads/filedownloads_recreate/failed_workflow_recreate/ ./data/summary.tsv --nestfiles 'recreate'
+	python ./bin/download_public_data_usi.py ./data/test_fail_too_small.tsv ./data/filedownloads/filedownloads_recreate/test_fail_too_small/ ./data/summary_test_fail_too_small.tsv --nestfiles 'recreate'
 
 test_mzml_nest:
 	python ./bin/download_public_data_usi.py ./data/test_download.tsv ./data/filedownloads/filedownloads_nest/ ./data/summary.tsv --nestfiles 'nest'
