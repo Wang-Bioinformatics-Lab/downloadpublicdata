@@ -12,9 +12,19 @@ def filter_and_output_usi(input_csv, output_file):
         reader = csv.DictReader(infile)
         for row in reader:
             # Check if sample_type is one of the allowed types
-            if row['sample_type'] in allowed_sample_types:
+            sample_type = row['sample_type']
+            if sample_type in allowed_sample_types:
                 usi = row['usi']
-                # Check if usi ends with an allowed extension
+                
+                # Ignore USIs containing ":__MACOSX"
+                if ":__MACOSX" in usi:
+                    continue
+                
+                # Additional checks for GNPS sample type
+                if sample_type == 'GNPS' and ("/ST" in usi or "/MTBLS" in usi):
+                    continue
+                
+                # Check if USI ends with an allowed extension
                 if any(usi.endswith(ext) for ext in allowed_extensions):
                     outfile.write(usi + '\n')
 
