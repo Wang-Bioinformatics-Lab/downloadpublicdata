@@ -2,6 +2,7 @@ import csv
 import sys
 import os
 
+# Extract MRIs with sample_type GNPS, MTBLS, MWB and ends with mzML/mzml or mzXML/mzxml
 # Allowed sample types and file extensions
 allowed_sample_types = {'GNPS', 'MTBLS', 'MWB'}
 allowed_extensions = {'.mzXML', '.mzML', '.mzml', '.mzxml'}
