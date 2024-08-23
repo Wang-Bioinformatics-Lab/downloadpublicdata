@@ -29,6 +29,9 @@ test_raw_small:
 test_raw:
 	python ./bin/download_public_data_usi.py ./data/test_download_raw.tsv ./data/filedownloads/test_raw ./data/summary_test_raw.tsv
 
+test_urlencode:
+	python ./bin/download_public_data_usi.py ./data/test_download_urlencodingneeded.tsv ./data/filedownloads/test_urlencode ./data/summary.tsv
+
 test_raw_trouble:
 	python ./bin/download_public_data_usi.py \
 	./data/test_download_raw_trouble.tsv \
