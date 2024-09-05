@@ -222,7 +222,7 @@ def _download_vendor(mri, target_filename):
     # change return value to 0 from original "CONVERTED"
     return 0
 
-def download_helper(usi, args, extension_filter=None, noconversion=False):
+def download_helper(usi, args, extension_filter=None, noconversion=False, dryrun=False):
     processdownloadraw = False
 
     try:
@@ -345,7 +345,14 @@ def download_helper(usi, args, extension_filter=None, noconversion=False):
                             if not os.path.exists(cache_directory):
                                 os.makedirs(cache_directory, exist_ok=True)
 
-                            _download(usi, cache_filename, mri_original_extension)
+                            if not dryrun:
+                                _download(usi, cache_filename, mri_original_extension)
+                            else:
+                                print("Would have downloaded", usi, "to", cache_filename)
+                                output_result_dict["status"] = "DRYRUN_TO_DOWNLOAD"
+
+                                return output_result_dict
+
 
                             # Creating symlink
                             if not os.path.exists(target_path):
@@ -358,7 +365,14 @@ def download_helper(usi, args, extension_filter=None, noconversion=False):
                         except:
                             # We are likely writing to read only file system for the cache
                             try:
-                                _download(usi, target_path, mri_original_extension)
+                                if not dryrun:
+                                    _download(usi, target_path, mri_original_extension)
+                                else:
+                                    print("Would have downloaded", usi, "to", cache_filename)
+                                    output_result_dict["status"] = "DRYRUN_TO_DOWNLOAD"
+
+                                    return output_result_dict
+                                
 
                                 output_result_dict["status"] = "CACHE_ERROR_DOWNLOAD_DIRECT"
                             except KeyboardInterrupt:
@@ -366,6 +380,7 @@ def download_helper(usi, args, extension_filter=None, noconversion=False):
                             except:
                                 output_result_dict["status"] = "DOWNLOAD_ERROR"
 
+            # No Caching
             else:
                 # if the target path file is already there, then we don't need to do anything
                 if os.path.exists(target_path):
@@ -373,18 +388,33 @@ def download_helper(usi, args, extension_filter=None, noconversion=False):
                 else:
                     if processdownloadraw:
                         print("Downloading the raw data without conversion", target_path)
-                        
-                        download_raw.download_raw_mri(usi, target_path)
 
-                        return
+                        if not dryrun:
+                            download_raw.download_raw_mri(usi, target_path)
+                        else:
+                            print("Would have downloaded", usi, "to", target_path)
+                            output_result_dict["status"] = "DRYRUN_TO_DOWNLOAD"
+
+                            return output_result_dict
+                        
+                        # TODO: I think we might have to update this
+                        return output_result_dict
 
                     download_url = _determine_download_url(usi)
 
                     if download_url is None:
                         output_result_dict["status"] = "ERROR"
                     else:
-                        # download in chunks using requests
-                        return_value = _download(usi, target_path, mri_original_extension)
+                        
+                        if not dryrun:
+                            # download in chunks using requests
+                            return_value = _download(usi, target_path, mri_original_extension)
+                        else:
+                            print("Would have downloaded", usi, "to", target_path)
+                            output_result_dict["status"] = "DRYRUN_TO_DOWNLOAD"
+
+                            return output_result_dict
+                        
                         if return_value == 0:
                             output_result_dict["status"] = "DOWNLOADED_INTO_OUTPUT_WITHOUT_CACHE"
                         elif return_value == 99:
@@ -425,6 +455,9 @@ def main():
     parser.add_argument('--extension_filter', default=None, help="Filter to only download certain extensions. Should be formatted as a semicolon separated list")
     
     parser.add_argument('--noconversion', action='store_true', default=False, help="Specifying to turn off conversion and download the full raw file")
+
+    parser.add_argument('--dryrun', action='store_true', default=False, help="This is a dry run flag that does not do the actual download, but reports what is to be downloaded and what has been downloaded")
+
 
     args = parser.parse_args()
 
@@ -474,7 +507,7 @@ def main():
         if len(usi) < 5:
             continue
 
-        result = download_helper(usi, args, extension_filter, noconversion=args.noconversion)
+        result = download_helper(usi, args, extension_filter, noconversion=args.noconversion, dryrun=args.dryrun)
         if result is not None:
             output_result_list.append(result)
     

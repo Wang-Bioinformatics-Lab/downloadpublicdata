@@ -48,9 +48,11 @@ test_raw_trouble_noconversion:
 test_invalid:
 	python ./bin/download_public_data_usi.py ./data/test_download_invalid.tsv ./data/filedownloads/test_invalid ./data/summary.tsv
 
+test_dryrun:
+	python ./bin/download_public_data_usi.py ./data/test_download.tsv ./data/filedownloads/test_dryrun ./data/summary.tsv --dryrun
+
 test:
 	python ./bin/download_public_data_usi.py ./data/test_download.tsv ./data/ ./data/summary.tsv
-	
 
 clean:
 	rm data/cache/* -r | true
