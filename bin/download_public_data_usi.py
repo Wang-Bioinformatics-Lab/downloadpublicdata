@@ -93,6 +93,21 @@ def _determine_ms_filename(usi):
         filename = sanitize(filename)
 
         return filename
+    
+    # Norman
+    if "files.dsfp.norman-data.eu" in download_url:
+        # Lets parse the arguments, using urlparse
+        from urllib.parse import urlparse, parse_qs
+        # removing parameters
+        parsed_params = urlparse(download_url)
+        filename = parsed_params.path
+        
+        filename = os.path.basename(filename)
+
+        # make this safe on disk
+        filename = sanitize(filename)
+
+        return filename
 
     # TODO: Work for PRIDE
     # TODO: Work for Metabolights
@@ -257,6 +272,7 @@ def download_helper(usi, args, extension_filter=None, noconversion=False, dryrun
             else:
                 target_filename = ms_filename 
         except:
+            print("Error determining ms filename for", usi, file=sys.stderr)
             return None
 
         if target_filename is not None:
