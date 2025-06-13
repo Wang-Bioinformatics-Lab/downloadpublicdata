@@ -34,11 +34,17 @@ def _determine_dataset_reconstructed_foldername(usi):
     """
     We are going to get the folder name that contains the datasetid together with the original folder structure in the usi
     """ 
+
+    print("XXX", usi)
+
+
     usi_splits = usi.split(":")
     dataset_id = usi_splits[1]
     fileportion = usi_splits[2]
     folder_name = os.path.dirname(fileportion)
     data_folder = os.path.join(dataset_id, folder_name)
+
+    print(data_folder)
 
     return data_folder
 
@@ -192,6 +198,8 @@ def _determine_target_subfolder(usi):
         target_subfolder = "MTBLS"
     elif usi.startswith("mzspec:ST"):
         target_subfolder = "ST"
+    elif usi.startswith("mzspec:NORMAN"):
+        target_subfolder = "NORMAN"
     else:
         target_subfolder = "other"
 
@@ -240,6 +248,8 @@ def _download_vendor(mri, target_filename):
 def download_helper(usi, args, extension_filter=None, noconversion=False, dryrun=False):
     processdownloadraw = False
 
+    print("ZZZZZZZ")
+
     try:
         if len(usi) < 5:
             return None
@@ -253,6 +263,8 @@ def download_helper(usi, args, extension_filter=None, noconversion=False, dryrun
         try:
             ms_filename = _determine_ms_filename(usi)
             target_subfolder_name = _determine_target_subfolder(usi)
+
+            print(target_subfolder_name)
                 
             # Filtering extensions
             if extension_filter is not None:
@@ -289,12 +301,13 @@ def download_helper(usi, args, extension_filter=None, noconversion=False, dryrun
 
                 target_path = os.path.join(target_dir, target_filename)
             elif args.nestfiles == "recreate":
-                target_folder = os.path.join(args.output_folder, target_subfolder_name) 
+                target_folder = os.path.join(args.output_folder, target_subfolder_name)
                 if target_subfolder_name == "other":
                     return None
                 
                 # recreate the folder structure
                 # add data source folder to output_folder
+                print("YYYYYYYYYYYY", usi)
                 dataset_folder = _determine_dataset_reconstructed_foldername(usi)
                 target_dir = os.path.join(target_folder, dataset_folder)
                 if not os.path.exists(target_dir):

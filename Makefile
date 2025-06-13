@@ -17,7 +17,13 @@ test_mzml_cache_small:
 	python ./bin/download_public_data_usi.py ./data/test_download_small.tsv ./data/filedownloads/ ./data/summary.tsv --cache_directory ./data/cache
 
 test_norman:
-	python ./bin/download_public_data_usi.py ./data/test_download_norman.tsv ./data/filedownloads/norman ./data/summary.tsv --cache_directory ./data/cache
+	python ./bin/download_public_data_usi.py ./data/test_download_norman.tsv \
+		./data/filedownloads/norman ./data/norman_summary.tsv
+
+test_norman_recreate:
+	python ./bin/download_public_data_usi.py ./data/test_download_norman.tsv \
+		./data/filedownloads_recreate/ ./data/norman_summary_recreate.tsv \
+		--nestfiles 'recreate'
 
 test_mzml_dataset_cache_small:
 	python ./bin/download_public_data_usi.py ./data/test_download_small.tsv \
